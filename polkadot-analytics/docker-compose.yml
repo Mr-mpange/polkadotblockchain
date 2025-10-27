@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: polkadot-analytics-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: polkadot_analytics
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./sample-data:/docker-entrypoint-initdb.d
+    networks:
+      - polkadot-analytics-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: polkadot-analytics-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/polkadot_analytics
+      POLKADOT_RPC_URL: wss://rpc.polkadot.io
+    depends_on:
+      - mongodb
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - polkadot-analytics-network
+
+  # AI Analytics API
+  ai-analytics:
+    build:
+      context: ./ai-analytics
+      dockerfile: Dockerfile
+    container_name: polkadot-analytics-ai
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/polkadot_analytics
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+    depends_on:
+      - mongodb
+    volumes:
+      - ./ai-analytics:/app
+      - ai_models:/app/models
+      - ai_logs:/app/logs
+    networks:
+      - polkadot-analytics-network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: polkadot-analytics-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://localhost:5000
+      NEXT_PUBLIC_AI_API_URL: http://localhost:8000
+    depends_on:
+      - backend
+      - ai-analytics
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - polkadot-analytics-network
+
+  # Redis (for caching and sessions)
+  redis:
+    image: redis:7.2-alpine
+    container_name: polkadot-analytics-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - polkadot-analytics-network
+
+volumes:
+  mongodb_data:
+  redis_data:
+  ai_models:
+  ai_logs:
+
+networks:
+  polkadot-analytics-network:
+    driver: bridge
