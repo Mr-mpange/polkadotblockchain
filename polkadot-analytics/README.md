@@ -36,7 +36,7 @@ polkadot-analytics/
 ### AI Analytics (Optional)
 - **Predictive Models**: Time series forecasting for parachain growth using Linear Regression, Random Forest, and Gradient Boosting
 - **Anomaly Detection**: Automatic detection of unusual patterns using Isolation Forest and statistical methods
-- **Insight Generation**: Natural language summaries of trends and patterns (with OpenAI integration)
+- **Insight Generation**: Natural language summaries of trends and patterns (with Google Gemini integration)
 - **Risk Assessment**: Predictive analytics for parachain health and performance
 - **Model Management**: Automatic model training, caching, and versioning
 
@@ -44,7 +44,7 @@ polkadot-analytics/
 
 - **Frontend**: Next.js, React, TailwindCSS, Chart.js, Polkadot.js
 - **Backend**: Node.js, Express.js, MongoDB, Polkadot.js API
-- **AI Analytics**: Python, FastAPI, Pandas, NumPy, Scikit-learn, OpenAI API, Motor (Async MongoDB)
+- **AI Analytics**: Python, FastAPI, Pandas, NumPy, Scikit-learn, Google Gemini API, Motor (Async MongoDB)
 - **Deployment**: Docker, Vercel, Heroku, AWS
 
 ## Quick Start
@@ -128,7 +128,7 @@ SUBSCAN_API_KEY=your_subscan_api_key
 MONGODB_URI=mongodb://localhost:27017/polkadot_analytics
 
 # AI Analytics (optional)
-OPENAI_API_KEY=your_openai_api_key
+GEMINI_API_KEY=your_gemini_api_key
 
 # Alert System
 ALERT_WEBHOOK_URL=your_webhook_url

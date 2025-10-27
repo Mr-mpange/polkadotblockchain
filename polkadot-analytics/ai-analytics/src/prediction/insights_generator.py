@@ -1,6 +1,6 @@
 """
 AI Insights Generation for Parachain Analytics
-Uses OpenAI or similar LLM to generate natural language insights
+Uses Google Gemini API to generate natural language insights
 """
 
 import os
@@ -10,12 +10,12 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 import json
 
-# Optional OpenAI import - fallback if not available
+# Google Gemini API import
 try:
-    import openai
-    OPENAI_AVAILABLE = True
+    import google.generativeai as genai
+    GEMINI_AVAILABLE = True
 except ImportError:
-    OPENAI_AVAILABLE = False
+    GEMINI_AVAILABLE = False
 
 import pandas as pd
 import numpy as np
@@ -24,18 +24,25 @@ import numpy as np
 class InsightsGenerator:
     """Generates AI-powered insights for parachain data."""
 
-    def __init__(self, openai_api_key: Optional[str] = None):
+    def __init__(self, gemini_api_key: Optional[str] = None):
         """Initialize the insights generator."""
-        self.openai_api_key = openai_api_key
+        self.gemini_api_key = gemini_api_key
         self._ready = False
 
-        if self.openai_api_key and OPENAI_AVAILABLE:
-            openai.api_key = self.openai_api_key
-            self._ready = True
-        elif self.openai_api_key and not OPENAI_AVAILABLE:
-            logging.warning("OpenAI API key provided but openai package not available")
+        if self.gemini_api_key and GEMINI_AVAILABLE:
+            try:
+                genai.configure(api_key=self.gemini_api_key)
+                # Test the configuration by creating a model instance
+                model = genai.GenerativeModel('gemini-1.5-flash')
+                self._ready = True
+                logging.info("Gemini API configured successfully")
+            except Exception as e:
+                logging.error(f"Failed to configure Gemini API: {e}")
+                self._ready = False
+        elif self.gemini_api_key and not GEMINI_AVAILABLE:
+            logging.warning("Gemini API key provided but google-generativeai package not available")
         else:
-            logging.info("Running without OpenAI - using rule-based insights")
+            logging.info("Running without Gemini - using rule-based insights")
 
     def is_ready(self) -> bool:
         """Check if insights generator is ready."""
@@ -59,14 +66,14 @@ class InsightsGenerator:
             Generated insights
         """
         try:
-            # Generate rule-based insights (works without OpenAI)
+            # Generate rule-based insights (works without Gemini)
             insights = await self._generate_rule_based_insights(
                 parachain_id, time_range_days
             )
 
-            # Try to enhance with OpenAI if available
-            if self._ready and OPENAI_AVAILABLE:
-                insights = await self._enhance_with_openai(insights, parachain_id, time_range_days)
+            # Try to enhance with Gemini if available
+            if self._ready and GEMINI_AVAILABLE:
+                insights = await self._enhance_with_gemini(insights, parachain_id, time_range_days)
 
             return {
                 "insights": insights,
@@ -76,7 +83,7 @@ class InsightsGenerator:
                 "data_points": len(insights),
                 "parachain_id": parachain_id,
                 "time_range_days": time_range_days,
-                "ai_enhanced": self._ready and OPENAI_AVAILABLE
+                "ai_enhanced": self._ready and GEMINI_AVAILABLE
             }
 
         except Exception as e:
@@ -195,7 +202,7 @@ class InsightsGenerator:
             if abs(change_pct) > 5:  # Significant change
                 direction = "increased" if change_pct > 0 else "decreased"
                 insights.append(
-                    f"{metric.upper()} has {direction} by {abs(change_pct):.".1f" over the past "
+                    f"{metric.upper()} has {direction} by {abs(change_pct):.1f} over the past "
                     f"{len(df)} days, indicating {'growth' if change_pct > 0 else 'decline'} momentum."
                 )
 
@@ -222,12 +229,12 @@ class InsightsGenerator:
 
                 if cv > 30:
                     insights.append(
-                        f"{metric.upper()} shows high volatility ({cv:.".1f" coefficient of variation), "
+                        f"{metric.upper()} shows high volatility ({cv:.1f} coefficient of variation), "
                         "suggesting unstable market conditions."
                     )
                 elif cv < 10:
                     insights.append(
-                        f"{metric.upper()} is relatively stable ({cv:.".1f" coefficient of variation), "
+                        f"{metric.upper()} is relatively stable ({cv:.1f} coefficient of variation), "
                         "indicating consistent performance."
                     )
 
@@ -264,7 +271,7 @@ class InsightsGenerator:
                 'significant': np.random.random() > 0.7,  # Simulate pattern detection
                 'peak_day': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][np.random.randint(0, 7)]
             }
-        except:
+        except Exception:
             return {'significant': False, 'peak_day': 'unknown'}
 
     def _analyze_parachain_health(self, df: pd.DataFrame, parachain_id: str) -> List[str]:
@@ -307,12 +314,12 @@ class InsightsGenerator:
                 health_pct = (health_score / factors) * 100
                 if health_pct >= 70:
                     insights.append(
-                        f"Parachain {parachain_id} shows strong overall health with {health_pct:.".0f" "
+                        f"Parachain {parachain_id} shows strong overall health with {health_pct:.0f}% "
                         "of indicators trending positively."
                     )
                 elif health_pct <= 30:
                     insights.append(
-                        f"Parachain {parachain_id} requires attention with only {health_pct:.".0f" "
+                        f"Parachain {parachain_id} requires attention with only {health_pct:.0f}% "
                         "of health indicators showing positive trends."
                     )
 
@@ -338,9 +345,9 @@ class InsightsGenerator:
 
         return summary
 
-    async def _enhance_with_openai(self, insights: List[str], parachain_id: Optional[str], time_range_days: int) -> List[str]:
-        """Enhance insights using OpenAI (if available)."""
-        if not OPENAI_AVAILABLE or not self.openai_api_key:
+    async def _enhance_with_gemini(self, insights: List[str], parachain_id: Optional[str], time_range_days: int) -> List[str]:
+        """Enhance insights using Gemini API (if available)."""
+        if not GEMINI_AVAILABLE or not self.gemini_api_key:
             return insights
 
         try:
@@ -359,22 +366,36 @@ class InsightsGenerator:
             Format each insight as a clear, concise statement.
             """
 
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=300,
-                temperature=0.7
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            response = model.generate_content(
+                prompt,
+                generation_config=genai.types.GenerationConfig(
+                    temperature=0.7,
+                    max_output_tokens=500,
+                )
             )
 
-            enhanced_content = response.choices[0].message.content.strip()
+            if not response or not response.text:
+                logging.warning("Gemini API returned empty response")
+                return insights
 
-            # Split enhanced insights
-            enhanced_insights = [line.strip('- ').strip()
-                               for line in enhanced_content.split('\n')
-                               if line.strip() and not line.startswith('Enhanced')]
+            enhanced_content = response.text.strip()
 
-            return enhanced_insights if enhanced_insights else insights
+            # Split enhanced insights with improved parsing
+            enhanced_insights = []
+            for line in enhanced_content.split('\n'):
+                line = line.strip()
+                if line and len(line) > 20:  # More substantial insights
+                    # Remove common prefixes
+                    for prefix in ['- ', '• ', '* ', '1. ', '2. ', '3. ', '4. ', '5. ']:
+                        if line.startswith(prefix):
+                            line = line[len(prefix):].strip()
+                            break
+                    if line and not any(skip in line.lower() for skip in ['enhanced', 'insight', 'summary', 'analysis']):
+                        enhanced_insights.append(line)
+
+            return enhanced_insights[:5] if enhanced_insights else insights  # Limit to 5 insights
 
         except Exception as e:
-            logging.error(f"Error enhancing insights with OpenAI: {e}")
+            logging.error(f"Error enhancing insights with Gemini: {e}")
             return insights

@@ -94,7 +94,7 @@ class HealthChecker:
             "data_loader": self._check_directory(model_dir),
             "time_series_forecaster": self._check_models(model_dir),
             "anomaly_detector": self._check_models(model_dir),
-            "insights_generator": {"status": "ready" if self._check_openai() else "degraded"},
+            "insights_generator": {"status": "ready" if self._check_gemini() else "degraded"},
             "file_system": {
                 "status": "healthy" if (os.path.exists(model_dir) and os.path.exists(logs_dir)) else "error"
             }
@@ -129,12 +129,21 @@ class HealthChecker:
         except Exception as e:
             return {"status": "error", "error": str(e)}
 
-    def _check_openai(self) -> bool:
-        """Check if OpenAI API is configured."""
+    def _check_gemini(self) -> bool:
+        """Check if Gemini API is configured."""
         try:
-            # Check if openai package is available and API key is set
-            import openai
-            return hasattr(openai, 'api_key') and openai.api_key is not None
+            # Check if google-generativeai package is available and API key is set
+            import google.generativeai as genai
+            api_key = os.getenv('GEMINI_API_KEY')
+            if api_key:
+                try:
+                    genai.configure(api_key=api_key)
+                    # Test the configuration by creating a model instance
+                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    return True
+                except Exception:
+                    return False
+            return False
         except ImportError:
             return False
         except Exception:

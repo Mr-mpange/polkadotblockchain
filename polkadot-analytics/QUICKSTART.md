@@ -73,7 +73,7 @@ cd frontend && npm run dev
 ### AI-Powered Analytics
 - **Predictive Models**: Time series forecasting using ML algorithms
 - **Anomaly Detection**: Automatic unusual pattern detection
-- **Natural Language Insights**: AI-generated summaries and recommendations
+- **Natural Language Insights**: AI-generated summaries and recommendations (Google Gemini)
 - **Risk Assessment**: Parachain health scoring and trend analysis
 
 ### Developer-Friendly
@@ -90,6 +90,7 @@ cd frontend && npm run dev
 │   Next.js       │◄──►│   Express.js    │◄──►│   FastAPI       │
 │   React + TS    │    │   Node.js       │    │   Python        │
 │   TailwindCSS   │    │   MongoDB       │    │   ML Models     │
+│                  │    │                 │    │   Gemini API    │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          ▼                       ▼                       ▼
@@ -112,7 +113,7 @@ SUBSCAN_API_KEY=your_subscan_api_key
 MONGODB_URI=mongodb://localhost:27017/polkadot_analytics
 
 # AI Analytics (Optional)
-OPENAI_API_KEY=your_openai_api_key
+GEMINI_API_KEY=your_gemini_api_key
 
 # Alert System
 ALERT_WEBHOOK_URL=your_webhook_url

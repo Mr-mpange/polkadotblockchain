@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     historical_data_days: int = 365
 
     # AI Configuration
-    openai_api_key: Optional[str] = None
+    gemini_api_key: Optional[str] = None
     huggingface_api_key: Optional[str] = None
 
     # Database Configuration
@@ -93,7 +93,7 @@ async def lifespan(app: FastAPI):
         )
 
         insights_generator = InsightsGenerator(
-            openai_api_key=settings.openai_api_key
+            gemini_api_key=settings.gemini_api_key
         )
 
         health_checker = HealthChecker()
