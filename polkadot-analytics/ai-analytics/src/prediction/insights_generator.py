@@ -33,7 +33,7 @@ class InsightsGenerator:
             try:
                 genai.configure(api_key=self.gemini_api_key)
                 # Test the configuration by creating a model instance
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                model = genai.GenerativeModel('gemini-2.5-flash')
                 self._ready = True
                 logging.info("Gemini API configured successfully")
             except Exception as e:
@@ -366,7 +366,7 @@ class InsightsGenerator:
             Format each insight as a clear, concise statement.
             """
 
-            model = genai.GenerativeModel('gemini-1.5-flash')
+            model = genai.GenerativeModel('gemini-2.5-flash')
             response = model.generate_content(
                 prompt,
                 generation_config=genai.types.GenerationConfig(
