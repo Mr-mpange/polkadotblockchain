@@ -1,0 +1,152 @@
+[
+  {
+    "parachain_id": "0",
+    "timestamp": "2024-01-01T00:00:00Z",
+    "tvl": 12500000000,
+    "transactions": 45000,
+    "users": 8500,
+    "blocks": 14400,
+    "volume": 15000000,
+    "fees": 2500
+  },
+  {
+    "parachain_id": "0",
+    "timestamp": "2024-01-02T00:00:00Z",
+    "tvl": 12650000000,
+    "transactions": 46000,
+    "users": 8700,
+    "blocks": 14400,
+    "volume": 16200000,
+    "fees": 2700
+  },
+  {
+    "parachain_id": "0",
+    "timestamp": "2024-01-03T00:00:00Z",
+    "tvl": 12480000000,
+    "transactions": 44000,
+    "users": 8400,
+    "blocks": 14400,
+    "volume": 14800000,
+    "fees": 2400
+  },
+  {
+    "parachain_id": "0",
+    "timestamp": "2024-01-04T00:00:00Z",
+    "tvl": 12800000000,
+    "transactions": 48000,
+    "users": 8900,
+    "blocks": 14400,
+    "volume": 17500000,
+    "fees": 2900
+  },
+  {
+    "parachain_id": "0",
+    "timestamp": "2024-01-05T00:00:00Z",
+    "tvl": 12950000000,
+    "transactions": 49000,
+    "users": 9100,
+    "blocks": 14400,
+    "volume": 18200000,
+    "fees": 3100
+  },
+  {
+    "parachain_id": "100",
+    "timestamp": "2024-01-01T00:00:00Z",
+    "tvl": 85000000,
+    "transactions": 3200,
+    "users": 650,
+    "blocks": 14400,
+    "volume": 1200000,
+    "fees": 180
+  },
+  {
+    "parachain_id": "100",
+    "timestamp": "2024-01-02T00:00:00Z",
+    "tvl": 87500000,
+    "transactions": 3400,
+    "users": 680,
+    "blocks": 14400,
+    "volume": 1350000,
+    "fees": 200
+  },
+  {
+    "parachain_id": "100",
+    "timestamp": "2024-01-03T00:00:00Z",
+    "tvl": 86000000,
+    "transactions": 3300,
+    "users": 660,
+    "blocks": 14400,
+    "volume": 1280000,
+    "fees": 190
+  },
+  {
+    "parachain_id": "100",
+    "timestamp": "2024-01-04T00:00:00Z",
+    "tvl": 89000000,
+    "transactions": 3500,
+    "users": 710,
+    "blocks": 14400,
+    "volume": 1420000,
+    "fees": 210
+  },
+  {
+    "parachain_id": "100",
+    "timestamp": "2024-01-05T00:00:00Z",
+    "tvl": 90500000,
+    "transactions": 3600,
+    "users": 730,
+    "blocks": 14400,
+    "volume": 1480000,
+    "fees": 220
+  },
+  {
+    "parachain_id": "200",
+    "timestamp": "2024-01-01T00:00:00Z",
+    "tvl": 125000000,
+    "transactions": 8500,
+    "users": 1200,
+    "blocks": 14400,
+    "volume": 5200000,
+    "fees": 850
+  },
+  {
+    "parachain_id": "200",
+    "timestamp": "2024-01-02T00:00:00Z",
+    "tvl": 128000000,
+    "transactions": 8800,
+    "users": 1250,
+    "blocks": 14400,
+    "volume": 5600000,
+    "fees": 920
+  },
+  {
+    "parachain_id": "200",
+    "timestamp": "2024-01-03T00:00:00Z",
+    "tvl": 126500000,
+    "transactions": 8600,
+    "users": 1220,
+    "blocks": 14400,
+    "volume": 5400000,
+    "fees": 880
+  },
+  {
+    "parachain_id": "200",
+    "timestamp": "2024-01-04T00:00:00Z",
+    "tvl": 132000000,
+    "transactions": 9200,
+    "users": 1300,
+    "blocks": 14400,
+    "volume": 6100000,
+    "fees": 1000
+  },
+  {
+    "parachain_id": "200",
+    "timestamp": "2024-01-05T00:00:00Z",
+    "tvl": 135000000,
+    "transactions": 9500,
+    "users": 1350,
+    "blocks": 14400,
+    "volume": 6400000,
+    "fees": 1050
+  }
+]

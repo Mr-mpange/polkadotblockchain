@@ -1,0 +1,67 @@
+{
+  "sample_parachains": [
+    {
+      "parachain_id": "0",
+      "name": "Polkadot",
+      "symbol": "DOT",
+      "description": "The main relay chain of the Polkadot network",
+      "total_supply": "1,200,000,000",
+      "circulating_supply": "1,150,000,000",
+      "status": "active"
+    },
+    {
+      "parachain_id": "100",
+      "name": "Statemine",
+      "symbol": "KSM",
+      "description": "Common-good parachain for Kusama ecosystem",
+      "total_supply": "10,000,000",
+      "circulating_supply": "8,500,000",
+      "status": "active"
+    },
+    {
+      "parachain_id": "200",
+      "name": "Acala",
+      "symbol": "ACA",
+      "description": "DeFi hub of Polkadot for stablecoins and liquid staking",
+      "total_supply": "1,000,000,000",
+      "circulating_supply": "650,000,000",
+      "status": "active"
+    },
+    {
+      "parachain_id": "201",
+      "name": "Moonbeam",
+      "symbol": "GLMR",
+      "description": "Ethereum-compatible smart contract parachain",
+      "total_supply": "1,000,000,000",
+      "circulating_supply": "300,000,000",
+      "status": "active"
+    },
+    {
+      "parachain_id": "202",
+      "name": "Astar",
+      "symbol": "ASTR",
+      "description": "Multi-chain smart contract network supporting EVM and WASM",
+      "total_supply": "7,000,000,000",
+      "circulating_supply": "2,800,000,000",
+      "status": "active"
+    },
+    {
+      "parachain_id": "203",
+      "name": "Parallel",
+      "symbol": "PARA",
+      "description": "DeFi parachain focused on lending and money markets",
+      "total_supply": "1,000,000,000",
+      "circulating_supply": "400,000,000",
+      "status": "active"
+    }
+  ],
+  "sample_metrics": {
+    "tvl": "Total Value Locked in USD",
+    "transactions": "Daily transaction count",
+    "users": "Active users per day",
+    "blocks": "Blocks produced per day",
+    "volume": "Trading volume in USD",
+    "fees": "Total fees collected in USD"
+  },
+  "note": "This is sample data for development and testing. Replace with real Polkadot API data in production."
+}

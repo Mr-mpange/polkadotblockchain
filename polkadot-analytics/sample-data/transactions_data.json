@@ -1,0 +1,122 @@
+[
+  {
+    "parachain_id": "0",
+    "timestamp": "2024-01-01T00:00:00Z",
+    "transactions": 45000,
+    "unique_users": 8500,
+    "new_users": 120,
+    "returning_users": 8380
+  },
+  {
+    "parachain_id": "0",
+    "timestamp": "2024-01-02T00:00:00Z",
+    "transactions": 46000,
+    "unique_users": 8700,
+    "new_users": 135,
+    "returning_users": 8565
+  },
+  {
+    "parachain_id": "0",
+    "timestamp": "2024-01-03T00:00:00Z",
+    "transactions": 44000,
+    "unique_users": 8400,
+    "new_users": 110,
+    "returning_users": 8290
+  },
+  {
+    "parachain_id": "0",
+    "timestamp": "2024-01-04T00:00:00Z",
+    "transactions": 48000,
+    "unique_users": 8900,
+    "new_users": 145,
+    "returning_users": 8755
+  },
+  {
+    "parachain_id": "0",
+    "timestamp": "2024-01-05T00:00:00Z",
+    "transactions": 49000,
+    "unique_users": 9100,
+    "new_users": 150,
+    "returning_users": 8950
+  },
+  {
+    "parachain_id": "100",
+    "timestamp": "2024-01-01T00:00:00Z",
+    "transactions": 3200,
+    "unique_users": 650,
+    "new_users": 45,
+    "returning_users": 605
+  },
+  {
+    "parachain_id": "100",
+    "timestamp": "2024-01-02T00:00:00Z",
+    "transactions": 3400,
+    "unique_users": 680,
+    "new_users": 52,
+    "returning_users": 628
+  },
+  {
+    "parachain_id": "100",
+    "timestamp": "2024-01-03T00:00:00Z",
+    "transactions": 3300,
+    "unique_users": 660,
+    "new_users": 48,
+    "returning_users": 612
+  },
+  {
+    "parachain_id": "100",
+    "timestamp": "2024-01-04T00:00:00Z",
+    "transactions": 3500,
+    "unique_users": 710,
+    "new_users": 58,
+    "returning_users": 652
+  },
+  {
+    "parachain_id": "100",
+    "timestamp": "2024-01-05T00:00:00Z",
+    "transactions": 3600,
+    "unique_users": 730,
+    "new_users": 62,
+    "returning_users": 668
+  },
+  {
+    "parachain_id": "200",
+    "timestamp": "2024-01-01T00:00:00Z",
+    "transactions": 8500,
+    "unique_users": 1200,
+    "new_users": 85,
+    "returning_users": 1115
+  },
+  {
+    "parachain_id": "200",
+    "timestamp": "2024-01-02T00:00:00Z",
+    "transactions": 8800,
+    "unique_users": 1250,
+    "new_users": 92,
+    "returning_users": 1158
+  },
+  {
+    "parachain_id": "200",
+    "timestamp": "2024-01-03T00:00:00Z",
+    "transactions": 8600,
+    "unique_users": 1220,
+    "new_users": 88,
+    "returning_users": 1132
+  },
+  {
+    "parachain_id": "200",
+    "timestamp": "2024-01-04T00:00:00Z",
+    "transactions": 9200,
+    "unique_users": 1300,
+    "new_users": 105,
+    "returning_users": 1195
+  },
+  {
+    "parachain_id": "200",
+    "timestamp": "2024-01-05T00:00:00Z",
+    "transactions": 9500,
+    "unique_users": 1350,
+    "new_users": 110,
+    "returning_users": 1240
+  }
+]

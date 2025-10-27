@@ -9,39 +9,11 @@ including TVL, transaction volumes, user activity, and cross-chain flows.
 ```
 polkadot-analytics/
 ├── frontend/                 # React/Next.js frontend
-│   ├── public/              # Static assets
-│   ├── src/
-│   │   ├── components/      # Reusable React components
-│   │   ├── pages/          # Next.js pages/routes
-│   │   ├── services/       # API services and utilities
-│   │   ├── hooks/          # Custom React hooks
-│   │   └── styles/         # Global styles and Tailwind
-│   ├── package.json
-│   └── README.md
-├── backend/                 # Node.js/Express backend
-│   ├── src/
-│   │   ├── controllers/    # Route controllers
-│   │   ├── models/         # Data models
-│   │   ├── routes/         # API routes
-│   │   ├── services/       # Business logic and API integrations
-│   │   ├── middleware/     # Express middleware
-│   │   └── utils/          # Utility functions
-│   ├── package.json
-│   └── README.md
-├── ai-analytics/            # Python ML analytics
-│   ├── models/             # Trained ML models
-│   ├── notebooks/          # Jupyter notebooks for development
-│   ├── src/
-│   │   ├── data_processing/ # Data preprocessing
-│   │   ├── models/         # ML model definitions
-│   │   ├── prediction/     # Prediction services
-│   │   └── utils/          # Utility functions
-│   ├── requirements.txt
-│   └── README.md
-├── config/                  # Configuration files
-│   ├── .env.example       # Environment variables template
-│   └── deployment/         # Deployment configurations
-└── README.md               # Main project documentation
+├── backend/                  # Node.js/Express backend
+├── ai-analytics/             # Python ML analytics
+├── config/                   # Configuration files
+├── sample-data/              # Sample data for testing
+└── README.md                 # Main documentation
 ```
 
 ## Features
@@ -62,16 +34,17 @@ polkadot-analytics/
 - **Alert Engine**: Configurable threshold-based alerting
 
 ### AI Analytics (Optional)
-- **Predictive Models**: Time series forecasting for parachain growth
-- **Anomaly Detection**: Automatic detection of unusual patterns
-- **Insight Generation**: Natural language summaries of trends
-- **Risk Assessment**: Predictive analytics for parachain health
+- **Predictive Models**: Time series forecasting for parachain growth using Linear Regression, Random Forest, and Gradient Boosting
+- **Anomaly Detection**: Automatic detection of unusual patterns using Isolation Forest and statistical methods
+- **Insight Generation**: Natural language summaries of trends and patterns (with OpenAI integration)
+- **Risk Assessment**: Predictive analytics for parachain health and performance
+- **Model Management**: Automatic model training, caching, and versioning
 
 ## Tech Stack
 
 - **Frontend**: Next.js, React, TailwindCSS, Chart.js, Polkadot.js
 - **Backend**: Node.js, Express.js, MongoDB, Polkadot.js API
-- **AI Analytics**: Python, Pandas, Scikit-learn, TensorFlow/PyTorch, Prophet
+- **AI Analytics**: Python, FastAPI, Pandas, NumPy, Scikit-learn, OpenAI API, Motor (Async MongoDB)
 - **Deployment**: Docker, Vercel, Heroku, AWS
 
 ## Quick Start
@@ -116,6 +89,17 @@ polkadot-analytics/
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:5000
    - API Documentation: http://localhost:5000/api-docs
+   - AI Analytics API: http://localhost:8000
+
+6. **Load Sample Data (Optional)**:
+   ```bash
+   # Import sample data into MongoDB for testing
+   cd sample-data
+   mongoimport --db polkadot_analytics --collection parachains --file parachains.json --jsonArray
+   mongoimport --db polkadot_analytics --collection tvl_data --file tvl_data.json --jsonArray
+   mongoimport --db polkadot_analytics --collection transactions_data --file transactions_data.json --jsonArray
+   mongoimport --db polkadot_analytics --collection blocks_data --file blocks_data.json --jsonArray
+   ```
 
 ## API Endpoints
 
@@ -124,7 +108,12 @@ polkadot-analytics/
 - `GET /tvl` - Total value locked across all parachains
 - `GET /activity` - Real-time activity metrics
 - `GET /history` - Historical data with date filters
-- `GET /alerts` - Active alerts and notifications
+- `GET /health` - AI Analytics health check
+- `POST /predict` - Generate ML predictions for parachain metrics
+- `POST /detect-anomalies` - Detect anomalies in parachain data
+- `POST /generate-insights` - Generate AI-powered insights
+- `GET /metrics` - Get available metrics for analysis
+- `GET /parachains` - Get available parachains for analysis
 
 ## Configuration
 
@@ -144,6 +133,17 @@ OPENAI_API_KEY=your_openai_api_key
 # Alert System
 ALERT_WEBHOOK_URL=your_webhook_url
 ```
+
+## Sample Data
+
+For development and testing, the `sample-data/` directory contains synthetic data that mimics real Polkadot parachain metrics:
+
+- **parachains.json**: Basic parachain information (Polkadot, Acala, Moonbeam, etc.)
+- **tvl_data.json**: 5 days of TVL, transaction, and volume data
+- **transactions_data.json**: User activity and transaction metrics
+- **blocks_data.json**: Block production and validator data
+
+See `sample-data/README.md` for detailed usage instructions.
 
 ## Deployment
 

@@ -1,0 +1,122 @@
+[
+  {
+    "parachain_id": "0",
+    "timestamp": "2024-01-01T00:00:00Z",
+    "blocks_produced": 14400,
+    "blocks_finalized": 14390,
+    "average_block_time": 6.1,
+    "validator_count": 297
+  },
+  {
+    "parachain_id": "0",
+    "timestamp": "2024-01-02T00:00:00Z",
+    "blocks_produced": 14400,
+    "blocks_finalized": 14395,
+    "average_block_time": 6.0,
+    "validator_count": 297
+  },
+  {
+    "parachain_id": "0",
+    "timestamp": "2024-01-03T00:00:00Z",
+    "blocks_produced": 14400,
+    "blocks_finalized": 14385,
+    "average_block_time": 6.2,
+    "validator_count": 297
+  },
+  {
+    "parachain_id": "0",
+    "timestamp": "2024-01-04T00:00:00Z",
+    "blocks_produced": 14400,
+    "blocks_finalized": 14398,
+    "average_block_time": 5.9,
+    "validator_count": 297
+  },
+  {
+    "parachain_id": "0",
+    "timestamp": "2024-01-05T00:00:00Z",
+    "blocks_produced": 14400,
+    "blocks_finalized": 14400,
+    "average_block_time": 5.8,
+    "validator_count": 297
+  },
+  {
+    "parachain_id": "100",
+    "timestamp": "2024-01-01T00:00:00Z",
+    "blocks_produced": 14400,
+    "blocks_finalized": 14390,
+    "average_block_time": 6.1,
+    "validator_count": 25
+  },
+  {
+    "parachain_id": "100",
+    "timestamp": "2024-01-02T00:00:00Z",
+    "blocks_produced": 14400,
+    "blocks_finalized": 14395,
+    "average_block_time": 6.0,
+    "validator_count": 25
+  },
+  {
+    "parachain_id": "100",
+    "timestamp": "2024-01-03T00:00:00Z",
+    "blocks_produced": 14400,
+    "blocks_finalized": 14385,
+    "average_block_time": 6.2,
+    "validator_count": 25
+  },
+  {
+    "parachain_id": "100",
+    "timestamp": "2024-01-04T00:00:00Z",
+    "blocks_produced": 14400,
+    "blocks_finalized": 14398,
+    "average_block_time": 5.9,
+    "validator_count": 25
+  },
+  {
+    "parachain_id": "100",
+    "timestamp": "2024-01-05T00:00:00Z",
+    "blocks_produced": 14400,
+    "blocks_finalized": 14400,
+    "average_block_time": 5.8,
+    "validator_count": 25
+  },
+  {
+    "parachain_id": "200",
+    "timestamp": "2024-01-01T00:00:00Z",
+    "blocks_produced": 14400,
+    "blocks_finalized": 14390,
+    "average_block_time": 6.1,
+    "validator_count": 35
+  },
+  {
+    "parachain_id": "200",
+    "timestamp": "2024-01-02T00:00:00Z",
+    "blocks_produced": 14400,
+    "blocks_finalized": 14395,
+    "average_block_time": 6.0,
+    "validator_count": 35
+  },
+  {
+    "parachain_id": "200",
+    "timestamp": "2024-01-03T00:00:00Z",
+    "blocks_produced": 14400,
+    "blocks_finalized": 14385,
+    "average_block_time": 6.2,
+    "validator_count": 35
+  },
+  {
+    "parachain_id": "200",
+    "timestamp": "2024-01-04T00:00:00Z",
+    "blocks_produced": 14400,
+    "blocks_finalized": 14398,
+    "average_block_time": 5.9,
+    "validator_count": 35
+  },
+  {
+    "parachain_id": "200",
+    "timestamp": "2024-01-05T00:00:00Z",
+    "blocks_produced": 14400,
+    "blocks_finalized": 14400,
+    "average_block_time": 5.8,
+    "validator_count": 35
+  }
+]
