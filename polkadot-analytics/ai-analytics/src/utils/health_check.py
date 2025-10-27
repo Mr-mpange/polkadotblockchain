@@ -139,7 +139,7 @@ class HealthChecker:
                 try:
                     genai.configure(api_key=api_key)
                     # Test the configuration by creating a model instance
-                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    model = genai.GenerativeModel('gemini-2.5-flash')
                     return True
                 except Exception:
                     return False
