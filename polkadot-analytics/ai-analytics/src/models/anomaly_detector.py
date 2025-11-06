@@ -215,7 +215,7 @@ class AnomalyDetector:
                             "value": float(value),
                             "z_score": float(z_score),
                             "severity": "high" if z_score > 3 else "medium",
-                            "description": f"Statistical anomaly detected (z-score: {z_score".2f"})"
+                            "description": f"Statistical anomaly detected (z-score: {z_score:.2f})"
                         })
 
             # Calculate statistics
