@@ -73,19 +73,18 @@ services:
       - "3000:3000"
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: http://localhost:5000
-      NEXT_PUBLIC_AI_API_URL: http://localhost:8000
+      NEXT_PUBLIC_API_URL: http://backend:5000
+      NEXT_PUBLIC_AI_API_URL: http://ai-analytics:8000
     depends_on:
       - backend
       - ai-analytics
     volumes:
       - ./frontend:/app
       - /app/node_modules
-      - /app/.next
     networks:
       - polkadot-analytics-network
 
-  # Redis (for caching and sessions)
+  # Redis
   redis:
     image: redis:7.2-alpine
     container_name: polkadot-analytics-redis

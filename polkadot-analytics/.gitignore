@@ -1,1 +1,17 @@
+# Node and Next.js
+node_modules/
+.next/
+dist/
+
+# Python
+__pycache__/
+*.pyc
+
+# Logs and environments
+*.log
 .env
+
+# OS files
+.DS_Store
+Thumbs.db
+f
