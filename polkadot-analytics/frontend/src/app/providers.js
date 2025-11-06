@@ -1,5 +1,6 @@
 'use client';
 
+import { ThemeProvider } from 'next-themes';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
@@ -32,54 +33,56 @@ export function Providers({ children }) {
   };
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-gray-50">
-        {/* Navigation */}
-        {pathname !== '/' && (
-          <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
-            <div className="container mx-auto px-6">
-              <div className="flex items-center justify-between h-16">
-                <Link href="/" className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg"></div>
-                  <span className="font-bold text-xl">Polkadot Analytics</span>
-                </Link>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <QueryClientProvider client={queryClient}>
+        <div className="min-h-screen bg-gray-50">
+          {/* Navigation */}
+          {pathname !== '/' && (
+            <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+              <div className="container mx-auto px-6">
+                <div className="flex items-center justify-between h-16">
+                  <Link href="/" className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg"></div>
+                    <span className="font-bold text-xl">Polkadot Analytics</span>
+                  </Link>
 
-                <div className="flex items-center gap-1">
-                  {navItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                        isActive(item.href)
-                          ? 'bg-blue-50 text-blue-600 font-medium'
-                          : 'text-gray-600 hover:bg-gray-100'
-                      }`}
-                    >
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.label}</span>
-                    </Link>
-                  ))}
+                  <div className="flex items-center gap-1">
+                    {navItems.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                          isActive(item.href)
+                            ? 'bg-blue-50 text-blue-600 font-medium'
+                            : 'text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        <item.icon className="w-4 h-4" />
+                        <span>{item.label}</span>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          </nav>
-        )}
+            </nav>
+          )}
 
-        {/* Main Content */}
-        <main>{children}</main>
+          {/* Main Content */}
+          <main>{children}</main>
 
-        {/* Footer */}
-        {pathname !== '/' && (
-          <footer className="bg-white border-t border-gray-200 mt-12">
-            <div className="container mx-auto px-6 py-8">
-              <div className="text-center text-gray-600 text-sm">
-                <p>© 2025 Polkadot Analytics Platform. All rights reserved.</p>
-                <p className="mt-2">Real-time insights for the Polkadot ecosystem</p>
+          {/* Footer */}
+          {pathname !== '/' && (
+            <footer className="bg-white border-t border-gray-200 mt-12">
+              <div className="container mx-auto px-6 py-8">
+                <div className="text-center text-gray-600 text-sm">
+                  <p> 2025 Polkadot Analytics Platform. All rights reserved.</p>
+                  <p className="mt-2">Real-time insights for the Polkadot ecosystem</p>
+                </div>
               </div>
-            </div>
-          </footer>
-        )}
-      </div>
-    </QueryClientProvider>
+            </footer>
+          )}
+        </div>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
