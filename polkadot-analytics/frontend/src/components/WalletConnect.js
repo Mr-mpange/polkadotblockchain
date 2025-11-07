@@ -2,15 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  FiWallet,
-  FiExternalLink,
-  FiCopy,
-  FiCheck,
-  FiUser,
-  FiSettings,
-  FiLogOut
-} from 'react-icons/fi';
+import { FiWallet, FiExternalLink, FiCopy, FiCheck, FiUser, FiSettings, FiLogOut } from 'react-icons/fi';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 
@@ -276,4 +268,4 @@ const WalletConnect = ({ className = '' }) => {
   );
 };
 
-export { WalletConnect };
+export default WalletConnect;

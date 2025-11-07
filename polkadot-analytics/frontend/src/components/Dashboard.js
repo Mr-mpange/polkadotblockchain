@@ -2,20 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  FiTrendingUp,
-  FiTrendingDown,
-  FiActivity,
-  FiDollarSign,
-  FiUsers,
-  FiRefreshCw,
-  FiAlertTriangle,
-  FiCheckCircle,
-  FiClock,
-  FiBarChart3,
-  FiPieChart,
-  FiLineChart
-} from 'react-icons/fi';
+import { FiActivity, FiAlertTriangle, FiPieChart, FiCheckCircle, FiClock, FiDollarSign, FiTrendingUp, FiTrendingDown, FiUsers } from 'react-icons/fi';
+
 import { useQuery } from '@tanstack/react-query';
 
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -29,7 +17,7 @@ import { ParachainChart } from './ParachainChart';
 import { TVLChart } from './TVLChart';
 import { ActivityChart } from './ActivityChart';
 import { AlertsPanel } from './AlertsPanel';
-import { WalletConnect } from './WalletConnect';
+import WalletConnect from './WalletConnect';
 
 import { api } from '../services/api';
 import { useTheme } from '../hooks/useTheme';
