@@ -1,0 +1,40 @@
+/* Navbar.css - Tailwind classes for a responsive top navbar with logo, links, and actions */
+
+@layer components {
+  .navbar {
+    @apply bg-card text-card-foreground border-b border-border sticky top-0 z-50;
+  }
+  .navbar-inner {
+    @apply container mx-auto px-4 md:px-6 h-16 flex items-center justify-between;
+  }
+  .navbar-brand {
+    @apply flex items-center gap-2;
+  }
+  .navbar-logo {
+    @apply w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500;
+  }
+  .navbar-title {
+    @apply font-bold text-xl;
+  }
+  .navbar-links {
+    @apply hidden md:flex items-center gap-2;
+  }
+  .navbar-link {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors;
+  }
+  .navbar-link-active {
+    @apply bg-primary/10 text-primary font-medium;
+  }
+  .navbar-actions {
+    @apply flex items-center gap-2;
+  }
+  .navbar-mobile-toggle {
+    @apply md:hidden inline-flex items-center justify-center w-10 h-10 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground;
+  }
+  .navbar-mobile-menu {
+    @apply md:hidden border-t border-border bg-card;
+  }
+  .navbar-mobile-item {
+    @apply block px-4 py-3 text-sm text-muted-foreground hover:bg-muted hover:text-foreground;
+  }
+}

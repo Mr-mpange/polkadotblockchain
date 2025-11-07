@@ -1,0 +1,48 @@
+/* ButtonsInputs.css - Tailwind classes for buttons, inputs, selects, toggles, search, and form groups */
+
+@layer components {
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-primary { @apply btn bg-primary text-primary-foreground hover:bg-primary/90; }
+  .btn-secondary { @apply btn bg-secondary text-secondary-foreground hover:bg-secondary/80; }
+  .btn-outline { @apply btn border border-input bg-background hover:bg-accent hover:text-accent-foreground; }
+  .btn-ghost { @apply btn hover:bg-muted hover:text-foreground; }
+  .btn-destructive { @apply btn bg-destructive text-destructive-foreground hover:bg-destructive/90; }
+  .btn-icon { @apply h-9 w-9 rounded-md; }
+  .btn-sm { @apply h-8 px-3 text-xs rounded-md; }
+  .btn-lg { @apply h-10 px-5 rounded-md; }
+
+  /* Inputs */
+  .input {
+    @apply w-full h-9 px-3 rounded-md border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50;
+  }
+  .input-sm { @apply h-8 text-sm; }
+  .input-lg { @apply h-11 text-base; }
+
+  /* Input with leading/trailing icons */
+  .input-group { @apply relative; }
+  .input-icon-left { @apply absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none; }
+  .input-icon-right { @apply absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground; }
+  .input-with-icon-left { @apply pl-9; }
+  .input-with-icon-right { @apply pr-9; }
+
+  /* Select */
+  .select { @apply input pr-8; }
+
+  /* Checkbox / Switch */
+  .checkbox { @apply h-4 w-4 rounded border-input text-primary focus:ring-ring/40; }
+  .switch {
+    @apply relative inline-flex h-5 w-9 items-center rounded-full bg-muted transition-colors;
+  }
+  .switch-thumb { @apply inline-block h-4 w-4 transform rounded-full bg-background transition-transform translate-x-0; }
+  .switch-on { @apply bg-primary; }
+  .switch-on .switch-thumb { @apply translate-x-4 bg-primary-foreground; }
+
+  /* Search */
+  .searchbox { @apply input; }
+  .searchbox-wrapper { @apply relative; }
+  .searchbox-icon { @apply input-icon-left; }
+  .searchbox-input { @apply input input-with-icon-left; }
+}

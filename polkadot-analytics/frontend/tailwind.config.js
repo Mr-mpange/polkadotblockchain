@@ -72,8 +72,9 @@ module.exports = {
     },
   },
   plugins: [
-    require('@tailwindcss/typography'),
-    require('@tailwindcss/forms'),
-    require('tailwindcss-animate'),
+    // Load optional plugins if available
+    ...(() => { try { return [require('@tailwindcss/typography')]; } catch (_) { return []; } })(),
+    ...(() => { try { return [require('@tailwindcss/forms')]; } catch (_) { return []; } })(),
+    ...(() => { try { return [require('tailwindcss-animate')]; } catch (_) { return []; } })(),
   ],
 }

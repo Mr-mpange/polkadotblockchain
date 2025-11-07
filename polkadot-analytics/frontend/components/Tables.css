@@ -1,0 +1,83 @@
+/* Tables.css - Tailwind component classes for data tables: headers, rows, pagination, responsive */
+
+@layer components {
+  /* Card wrapper for tables */
+  .table-card {
+    @apply rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden;
+  }
+
+  /* Base table */
+  .table-base {
+    @apply w-full text-sm;
+  }
+
+  thead.table-head {
+    @apply bg-muted text-muted-foreground;
+  }
+
+  .table-head th {
+    @apply font-medium p-4 text-left border-b border-border whitespace-nowrap;
+  }
+
+  .table-row {
+    @apply border-b border-border transition-colors;
+  }
+
+  .table-row-hover {
+    @apply hover:bg-muted/50;
+  }
+
+  .table-cell {
+    @apply p-4 align-middle;
+  }
+
+  /* Striped rows */
+  .table-striped tbody tr:nth-child(even) {
+    @apply bg-muted/30;
+  }
+
+  /* Status badges inside table */
+  .status-badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+  .status-ok {
+    @apply bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400;
+  }
+  .status-warn {
+    @apply bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400;
+  }
+  .status-err {
+    @apply bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400;
+  }
+
+  /* Pagination */
+  .table-pagination {
+    @apply flex items-center justify-between px-4 py-3 border-t border-border bg-card;
+  }
+  .table-page-btn {
+    @apply inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground text-xs;
+  }
+  .table-page-info {
+    @apply text-xs text-muted-foreground;
+  }
+
+  /* Responsive: stack cells vertically on small screens */
+  @media (max-width: 640px) {
+    .table-responsive thead {
+      display: none;
+    }
+    .table-responsive tbody tr {
+      @apply grid gap-2 p-4 border-b border-border;
+      grid-template-columns: 1fr;
+    }
+    .table-responsive tbody td {
+      @apply p-0;
+    }
+    .table-responsive .cell-label {
+      @apply text-xs text-muted-foreground block;
+    }
+    .table-responsive .cell-value {
+      @apply text-sm font-medium;
+    }
+  }
+}
