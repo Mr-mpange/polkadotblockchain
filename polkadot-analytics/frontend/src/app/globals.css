@@ -2,15 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Modular component styles */
-@import '../../components/Cards.css';
-@import '../../components/Tables.css';
-@import '../../components/Charts.css';
-@import '../../components/Alerts.css';
-@import '../../components/Sidebar.css';
-@import '../../components/Navbar.css';
-@import '../../components/ButtonsInputs.css';
-@import '../../components/Modals.css';
+/* Alerts */
+.alert {
+  @apply relative w-full rounded-lg border p-4 flex items-start gap-3 bg-card text-card-foreground shadow-sm;
+}
+.alert-icon {
+  @apply shrink-0 w-5 h-5 mt-0.5;
+}
+.alert-content {
+  @apply flex-1 min-w-0;
+}
+.alert-title {
+  @apply mb-1 font-medium leading-none tracking-tight;
+}
+.alert-desc {
+  @apply text-sm text-muted-foreground;
+}
 
 @layer base {
   :root {
