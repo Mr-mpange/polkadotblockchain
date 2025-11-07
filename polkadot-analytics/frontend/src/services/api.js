@@ -63,14 +63,51 @@ class ApiService {
   // Dashboard endpoints
   async getDashboardData(period = '24h') {
     try {
+      console.log(`Fetching dashboard data for period: ${period}`);
+      console.log(`API Base URL: ${this.baseURL}`);
+      
       const response = await this.client.get('/dashboard', {
-        params: { period }
+        params: { period },
+        timeout: 10000 // 10 second timeout
       });
+      
+      console.log('Dashboard data received:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      console.error('Error fetching dashboard data:', {
+        message: error.message,
+        code: error.code,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          params: error.config?.params
+        },
+        response: error.response?.data || 'No response data'
+      });
+      
+      // Provide a fallback response for development
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Using mock data due to API error');
+        return this.getMockDashboardData(period);
+      }
+      
       throw error;
     }
+  }
+  
+  // Mock data for development
+  getMockDashboardData(period) {
+    console.warn('Using mock dashboard data');
+    return {
+      totalValueLocked: 1250000000,
+      activeParachains: 37,
+      dailyTransactions: 125000,
+      activeAccounts: 24500,
+      recentTransactions: [],
+      period: period || '24h',
+      updatedAt: new Date().toISOString(),
+      _isMock: true
+    };
   }
 
   // Parachains endpoints
