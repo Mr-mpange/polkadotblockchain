@@ -5,7 +5,7 @@ class ApiService {
     this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
     this.client = axios.create({
       baseURL: this.baseURL,
-      timeout: 30000,
+      timeout: process.env.NODE_ENV === 'production' ? 30000 : 8000,
       headers: {
         'Content-Type': 'application/json',
       },

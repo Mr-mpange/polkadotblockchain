@@ -26,8 +26,12 @@ import { useWallet } from '../hooks/useWallet';
 const Dashboard = () => {
   const { theme } = useTheme();
   const { account, connectWallet } = useWallet();
-  const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [lastRefresh, setLastRefresh] = useState(null);
   const [selectedPeriod, setSelectedPeriod] = useState('24h');
+
+  useEffect(() => {
+    setLastRefresh(new Date());
+  }, []);
 
   // Fetch dashboard data
   const { data: dashboardData, isLoading, error, refetch } = useQuery({
@@ -124,7 +128,9 @@ const Dashboard = () => {
               {/* Last Updated */}
               <div className="hidden md:flex items-center space-x-2 text-sm text-muted-foreground">
                 <FiClock className="h-4 w-4" />
-                <span>Updated {lastRefresh.toLocaleTimeString()}</span>
+                <span suppressHydrationWarning>
+                  Updated {lastRefresh ? new Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(lastRefresh) : '—'}
+                </span>
               </div>
             </div>
           </div>
