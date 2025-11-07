@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TVLChart } from '@/components/TVLChart';
-import { api } from '@/services/api';
+import api from '../../services/api';
 
 export default function TVLPage() {
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
