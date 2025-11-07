@@ -18,14 +18,16 @@ class ApiService {
     // Request interceptor for auth tokens
     this.client.interceptors.request.use(
       (config) => {
-        const token = localStorage.getItem('auth_token');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
+        if (typeof window !== 'undefined' && window.localStorage) {
+          const token = window.localStorage.getItem('auth_token');
+          if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+          }
 
-        const apiKey = localStorage.getItem('api_key');
-        if (apiKey) {
-          config.headers['x-api-key'] = apiKey;
+          const apiKey = window.localStorage.getItem('api_key');
+          if (apiKey) {
+            config.headers['x-api-key'] = apiKey;
+          }
         }
 
         return config;
@@ -43,8 +45,14 @@ class ApiService {
       (error) => {
         if (error.response?.status === 401) {
           // Handle unauthorized access
-          localStorage.removeItem('auth_token');
-          window.location.href = '/login';
+          if (typeof window !== 'undefined') {
+            try {
+              window.localStorage?.removeItem('auth_token');
+            } catch (_) {}
+            if (window.location) {
+              window.location.href = '/login';
+            }
+          }
         }
 
         return Promise.reject(error);
@@ -307,19 +315,27 @@ class ApiService {
 
   // Utility methods
   setAuthToken(token) {
-    localStorage.setItem('auth_token', token);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem('auth_token', token);
+    }
   }
 
   setApiKey(apiKey) {
-    localStorage.setItem('api_key', apiKey);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem('api_key', apiKey);
+    }
   }
 
   removeAuthToken() {
-    localStorage.removeItem('auth_token');
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.removeItem('auth_token');
+    }
   }
 
   removeApiKey() {
-    localStorage.removeItem('api_key');
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.removeItem('api_key');
+    }
   }
 
   // Health check

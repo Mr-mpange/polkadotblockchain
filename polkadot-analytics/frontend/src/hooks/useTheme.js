@@ -30,6 +30,7 @@ export const useTheme = () => {
   }, []);
 
   const applyTheme = (newTheme) => {
+    if (typeof document === 'undefined') return;
     const root = document.documentElement;
 
     if (newTheme === 'dark') {
@@ -61,6 +62,6 @@ export const useTheme = () => {
     setSystemTheme,
     isDark: theme === 'dark',
     isLight: theme === 'light',
-    isSystem: localStorage.getItem('theme') === 'system',
+    isSystem: (typeof window !== 'undefined' && window.localStorage) ? localStorage.getItem('theme') === 'system' : false,
   };
 };

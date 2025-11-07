@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import api from '../../services/api';
+import { api } from '../../services/api';
 
 export default function ParachainsPage() {
   const [searchQuery, setSearchQuery] = useState('');

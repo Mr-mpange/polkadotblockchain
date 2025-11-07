@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiWallet, FiExternalLink, FiCopy, FiCheck, FiUser, FiSettings, FiLogOut } from 'react-icons/fi';
+import { FiLogIn, FiExternalLink, FiCopy, FiCheck, FiUser, FiSettings, FiLogOut } from 'react-icons/fi';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 
@@ -133,7 +133,7 @@ const WalletConnect = ({ className = '' }) => {
           disabled={isConnecting}
           className="flex items-center space-x-2 bg-gradient-polkadot hover:opacity-90"
         >
-          <FiWallet className="h-4 w-4" />
+          <FiLogIn className="h-4 w-4" />
           <span>
             {isConnecting ? 'Connecting...' : 'Connect Wallet'}
           </span>

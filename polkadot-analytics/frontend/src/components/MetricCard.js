@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { FiTrendingUp, FiTrendingDown, FiMinus } from 'react-icons/fi';
 import { Card, CardContent } from './card';
-import { Skeleton } from './skeleton';
+import { Skeleton } from './ui/skeleton';
 
 const MetricCard = ({
   title,

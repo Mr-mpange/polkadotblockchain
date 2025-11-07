@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiActivity, FiAlertTriangle, FiPieChart, FiCheckCircle, FiClock, FiDollarSign, FiTrendingUp, FiTrendingDown, FiUsers } from 'react-icons/fi';
+import { FiActivity, FiAlertTriangle, FiPieChart, FiCheckCircle, FiClock, FiDollarSign, FiTrendingUp, FiTrendingDown, FiUsers, FiRefreshCw, FiBarChart2 } from 'react-icons/fi';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -216,7 +216,7 @@ const Dashboard = () => {
                     title="24h Transactions"
                     value={formatNumber(dashboardData?.totalTransactions24h)}
                     change={dashboardData?.transactionsChange}
-                    icon={<FiBarChart3 className="h-5 w-5" />}
+                    icon={<FiBarChart2 className="h-5 w-5" />}
                     trend={dashboardData?.transactionsChange >= 0 ? 'up' : 'down'}
                   />
                 </motion.div>
@@ -251,7 +251,7 @@ const Dashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <FiLineChart className="h-5 w-5" />
+                  <FiTrendingUp className="h-5 w-5" />
                   <span>Total Value Locked</span>
                 </CardTitle>
               </CardHeader>
