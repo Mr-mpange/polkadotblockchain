@@ -11,10 +11,9 @@ const { connectDB } = require('./src/config/database');
 const { errorHandler } = require('./src/middleware/errorHandler');
 const { notFound } = require('./src/middleware/notFound');
 
-// Import test routes first
+// Import routes
+const healthRoutes = require('./routes/health');
 const testRoutes = require('./src/routes/test-routes');
-
-// Original routes
 const authRoutes = require('./src/routes/auth');
 const parachainRoutes = require('./src/routes/parachains');
 const tvlRoutes = require('./src/routes/tvl');
@@ -29,11 +28,29 @@ const { initializeScheduler } = require('./src/services/scheduler');
 class PolkadotAnalyticsApp {
   constructor() {
     this.app = express();
-    this.port = process.env.PORT || 5000;
+    this.port = process.env.PORT || 3001;
+    
+    // Set up middleware and routes
+    this.setupBasicMiddleware();
     this.setupMiddleware();
     this.setupRoutes();
     this.setupSwagger();
     this.setupErrorHandling();
+  }
+  
+  // Add this new method for basic middleware
+  setupBasicMiddleware() {
+    // Basic request logging
+    this.app.use((req, res, next) => {
+      console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+      next();
+    });
+    
+    // Basic error handling
+    this.app.use((err, req, res, next) => {
+      console.error('Unhandled error:', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    });
   }
 
   setupMiddleware() {
@@ -99,16 +116,42 @@ class PolkadotAnalyticsApp {
     // Compression
     this.app.use(compression());
 
-    // Health check endpoint - moved to a separate method to ensure it's registered early
-    this.app.get('/health', (req, res) => {
-      logger.info('Health check endpoint hit');
+    // Health check endpoint
+  setupHealthCheck() {
+    console.log('Setting up health check routes...');
+    
+    // Root endpoint
+    this.app.get('/', (req, res) => {
       res.status(200).json({
-        status: 'OK',
+        name: 'Polkadot Analytics API',
+        status: 'running',
         timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        version: process.env.npm_package_version || '1.0.0',
-        nodeEnv: process.env.NODE_ENV || 'development'
+        docs: '/api-docs',
+        health: '/health'
       });
+    });
+
+    // Health check endpoint
+    this.app.get('/health', (req, res) => {
+      console.log('Health check endpoint hit');
+      try {
+        res.status(200).json({
+          status: 'OK',
+          timestamp: new Date().toISOString(),
+          uptime: process.uptime(),
+          version: process.env.npm_package_version || '1.0.0',
+          nodeEnv: process.env.NODE_ENV || 'development',
+          message: 'Server is running and healthy',
+          routes: ['/health', '/', '/api-docs']
+        });
+      } catch (error) {
+        console.error('Health check error:', error);
+        res.status(500).json({
+          status: 'ERROR',
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
     });
   }
 
@@ -119,7 +162,11 @@ class PolkadotAnalyticsApp {
       next();
     });
 
-    // Mount test routes first
+    // Mount health routes at root
+    console.log('Mounting health routes at /');
+    this.app.use('/', healthRoutes);
+
+    // Mount test routes
     console.log('Mounting test routes at /api/test');
     this.app.use('/api/test', testRoutes);
 
