@@ -1,5 +1,7 @@
 const { Sequelize } = require('sequelize');
 const { logger } = require('../utils/logger');
+const { execSync } = require('child_process');
+const path = require('path');
 
 const MAX_RETRIES = 5;
 const RETRY_DELAY = 5000; // 5 seconds
@@ -30,10 +32,38 @@ const sequelize = new Sequelize(
       min: parseInt(process.env.DB_MIN_POOL_SIZE) || 2,
       acquire: 60000, // Max time in ms that a connection can be idle before being released
       idle: 10000,    // Max time in ms that a connection can be idle before being released
-      acquire: 60000
     }
   }
 );
+
+/**
+ * Run database migrations
+ */
+async function runMigrations() {
+  try {
+    logger.info('🔄 Running database migrations...');
+    
+    // Use Sequelize CLI to run migrations
+    execSync('npx sequelize-cli db:migrate', { 
+      stdio: 'inherit',
+      cwd: path.join(__dirname, '../..') 
+    });
+    
+    // Only run seeds in development or if explicitly enabled
+    if (process.env.NODE_ENV === 'development' || process.env.RUN_SEEDERS === 'true') {
+      logger.info('🌱 Running database seeders...');
+      execSync('npx sequelize-cli db:seed:all', { 
+        stdio: 'inherit',
+        cwd: path.join(__dirname, '../..')
+      });
+    }
+    
+    logger.info('✅ Database migrations completed successfully');
+  } catch (error) {
+    logger.error('❌ Error running migrations:', error);
+    process.exit(1);
+  }
+}
 
 /**
  * Attempts to establish a database connection with retry logic
@@ -44,9 +74,12 @@ const connectDB = async function connectDB(retryCount = 0) {
     await sequelize.authenticate();
     logger.info('✅ MySQL connection established successfully.');
     
-    // Sync models with database (set force: false in production)
+    // Run migrations on startup
+    await runMigrations();
+    
+    // Sync models with database (only in development, migrations handle production)
     if (process.env.NODE_ENV === 'development') {
-      await sequelize.sync({ alter: true });
+      await sequelize.sync({ alter: false }); // Set to false since we're using migrations
       logger.info('✅ Database models synchronized');
     }
   } catch (error) {
@@ -75,6 +108,6 @@ process.on('SIGINT', async () => {
     logger.error('Error closing MySQL connection:', error);
     process.exit(1);
   }
-});;
+});
 
 module.exports = { sequelize, connectDB };

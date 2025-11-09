@@ -1,19 +1,24 @@
 const { sequelize } = require('../config/mysql');
 const { DataTypes } = require('sequelize');
+const fs = require('fs');
+const path = require('path');
 
-// Import models
-const Block = require('./block');
-const Transaction = require('./transaction');
-const Validator = require('./validator');
-const Account = require('./account');
+// Import all models
+const models = {};
 
-// Initialize models with sequelize instance and DataTypes
-const models = {
-  Block: Block(sequelize, DataTypes),
-  Transaction: Transaction(sequelize, DataTypes),
-  Validator: Validator(sequelize, DataTypes),
-  Account: Account(sequelize, DataTypes)
-};
+// Read all model files
+const modelFiles = fs.readdirSync(__dirname)
+  .filter(file => 
+    file !== 'index.js' && 
+    file.endsWith('.js') &&
+    !file.endsWith('.test.js')
+  );
+
+// Initialize each model
+modelFiles.forEach(file => {
+  const model = require(path.join(__dirname, file))(sequelize, DataTypes);
+  models[model.name] = model;
+});
 
 // Set up associations
 Object.keys(models).forEach(modelName => {

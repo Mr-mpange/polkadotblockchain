@@ -503,13 +503,13 @@
     "stdin-discarder": "^0.2.2",
     "stop-iteration-iterator": "^1.1.0",
     "streamsearch": "^1.1.0",
+    "string_decoder": "^1.1.1",
     "string-length": "^4.0.2",
     "string-width": "^7.2.0",
     "string-width-cjs": "^4.2.3",
     "string.prototype.trim": "^1.2.10",
     "string.prototype.trimend": "^1.0.9",
     "string.prototype.trimstart": "^1.0.8",
-    "string_decoder": "^1.1.1",
     "strip-ansi": "^6.0.1",
     "strip-ansi-cjs": "^6.0.1",
     "strip-bom": "^4.0.0",
@@ -597,7 +597,8 @@
     "z-schema": "^5.0.5"
   },
   "devDependencies": {
-    "jest": "^29.7.0"
+    "jest": "^29.7.0",
+    "sequelize-cli": "^6.6.3"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
