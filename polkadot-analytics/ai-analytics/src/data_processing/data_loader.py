@@ -1,51 +1,100 @@
 """
 Data loading utilities for AI Analytics
-Handles data fetching from MongoDB and preprocessing
+Handles data fetching from MySQL database using SQLAlchemy
 """
 
 import os
 import logging
 from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 import asyncio
-from motor.motor_asyncio import AsyncIOMotorClient
 import pandas as pd
 import numpy as np
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.pool import QueuePool
 
+# Import models
+from ..models import Block, Transaction, Parachain, Metric, Base
 
 class DataLoader:
-    """Handles data loading and preprocessing for ML models."""
+    """Handles data loading and preprocessing for ML models using SQLAlchemy."""
 
-    def __init__(self, mongodb_uri: str, database_name: str):
-        """Initialize the data loader."""
-        self.mongodb_uri = mongodb_uri
-        self.database_name = database_name
-        self.client: Optional[AsyncIOMotorClient] = None
-        self.db = None
+    def __init__(self, db_session: Optional[Session] = None, db_url: Optional[str] = None):
+        """Initialize the data loader with a SQLAlchemy session or connection URL."""
+        self.db_session = db_session
+        self.db_url = db_url or os.getenv("DATABASE_URI")
+        self._engine = None
+        self._async_engine = None
+        self._session_factory = None
+        self._async_session_factory = None
         self._ready = False
 
     async def connect(self):
-        """Establish MongoDB connection."""
-        try:
-            self.client = AsyncIOMotorClient(self.mongodb_uri)
-            self.db = self.client[self.database_name]
+        """Establish database connection and create session factory."""
+        if self.db_session is None and not self.db_url:
+            raise ValueError("Either db_session or db_url must be provided")
 
-            # Test connection
-            await self.client.admin.command('ping')
-            self._ready = True
-            logging.info(f"Connected to MongoDB: {self.database_name}")
+        try:
+            if self.db_session is None:
+                # Create sync engine
+                self._engine = create_engine(
+                    self.db_url,
+                    poolclass=QueuePool,
+                    pool_size=5,
+                    max_overflow=10,
+                    pool_timeout=30,
+                    pool_recycle=3600
+                )
+                
+                # Create async engine
+                self._async_engine = create_async_engine(
+                    self.db_url.replace('mysql://', 'mysql+aiomysql://'),
+                    poolclass=QueuePool,
+                    pool_size=5,
+                    max_overflow=10,
+                    pool_timeout=30,
+                    pool_recycle=3600
+                )
+                
+                # Create session factories
+                self._session_factory = sessionmaker(
+                    bind=self._engine,
+                    autocommit=False,
+                    autoflush=False
+                )
+                
+                self._async_session_factory = sessionmaker(
+                    bind=self._async_engine,
+                    class_=AsyncSession,
+                    expire_on_commit=False
+                )
+                
+                # Test connection
+                with self._engine.connect() as conn:
+                    conn.execute(text("SELECT 1"))
+                
+                self._ready = True
+                logging.info(f"Connected to database: {self.db_url}")
+            else:
+                self._ready = True
+                logging.info("Using provided database session")
 
         except Exception as e:
-            logging.error(f"Failed to connect to MongoDB: {e}")
+            logging.error(f"Failed to connect to database: {e}")
             self._ready = False
             raise
 
     async def disconnect(self):
-        """Close MongoDB connection."""
-        if self.client:
-            self.client.close()
-            self._ready = False
-            logging.info("Disconnected from MongoDB")
+        """Close database connections."""
+        if self._engine:
+            self._engine.dispose()
+        if self._async_engine:
+            await self._async_engine.dispose()
+            
+        self._ready = False
+        logging.info("Disconnected from database")
 
     def is_ready(self) -> bool:
         """Check if data loader is ready."""
@@ -75,34 +124,30 @@ class DataLoader:
         if not self._ready:
             await self.connect()
 
-        # Default to last 30 days if no dates provided
-        if not end_date:
-            end_date = datetime.now()
-        if not start_date:
-            start_date = end_date - timedelta(days=30)
-
-        try:
-            collection_name = f"{metric}_data"
-            collection = self.db[collection_name]
-
-            # Build query
-            query = {
-                "parachain_id": parachain_id,
-                "timestamp": {"$gte": start_date, "$lte": end_date}
-            }
-
-            # Fetch data
-            cursor = collection.find(query).sort("timestamp", 1).limit(limit)
-            data = await cursor.to_list(length=limit)
-
+        async with self.get_async_session() as session:
+            query = f"""
+                SELECT * FROM metrics 
+                WHERE parachain_id = :parachain_id AND metric = :metric
+            """
+            params = {"parachain_id": parachain_id, "metric": metric}
+            
+            if start_date:
+                query += " AND timestamp >= :start_date"
+                params["start_date"] = start_date
+            if end_date:
+                query += " AND timestamp <= :end_date"
+                params["end_date"] = end_date
+                
+            query += " ORDER BY timestamp ASC"
+            
+            result = await session.execute(text(query), params)
+            data = [dict(row) for row in result.mappings()]
+            
             if not data:
                 logging.warning(f"No data found for {parachain_id} {metric}")
                 return pd.DataFrame()
-
-            # Convert to DataFrame
-            df = pd.DataFrame(data)
-
-            # Clean up data
+                
+            return pd.DataFrame(data)
             if 'timestamp' in df.columns:
                 df['timestamp'] = pd.to_datetime(df['timestamp'])
                 df = df.set_index('timestamp')

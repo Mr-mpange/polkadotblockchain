@@ -9,10 +9,17 @@ from contextlib import asynccontextmanager
 from typing import Optional
 
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, Session
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Import our modules (with fallbacks for missing dependencies)
 try:
@@ -27,6 +34,20 @@ except ImportError as e:
     logging.warning(f"Some modules not available: {e}")
     MODULES_AVAILABLE = False
 
+# Database setup
+DATABASE_URL = os.getenv("DATABASE_URI", "mysql://user:password@localhost:3306/polkadot_analytics")
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+# Dependency to get DB session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
 # Application settings
 class Settings:
     """Application settings."""
@@ -34,7 +55,7 @@ class Settings:
     api_port: int = 8000
     api_reload: bool = False
     log_level: str = "INFO"
-    mongodb_uri: str = "mongodb://localhost:27017"
+    database_uri: str = DATABASE_URL
     database_name: str = "polkadot_analytics"
 
 settings = Settings()
@@ -45,6 +66,7 @@ forecaster: Optional[TimeSeriesForecaster] = None
 anomaly_detector: Optional[AnomalyDetector] = None
 insights_generator: Optional[InsightsGenerator] = None
 health_checker: Optional[HealthChecker] = None
+db_session = SessionLocal()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -56,23 +78,23 @@ async def lifespan(app: FastAPI):
 
     logging.info("Starting AI Analytics API...")
 
-    # Initialize services (with error handling)
-    if MODULES_AVAILABLE:
-        try:
-            data_loader = DataLoader(settings.mongodb_uri, settings.database_name)
-            await data_loader.connect()
-
-            forecaster = TimeSeriesForecaster()
-            anomaly_detector = AnomalyDetector()
-            insights_generator = InsightsGenerator()
-            health_checker = HealthChecker()
-
-            logging.info("AI Analytics services initialized successfully")
-
-        except Exception as e:
-            logging.error(f"Failed to initialize some services: {e}")
-    else:
-        logging.warning("Running in limited mode - some modules not available")
+    # Initialize services
+    try:
+        # Initialize data loader with SQLAlchemy session
+        data_loader = DataLoader(db_session=db_session)
+        
+        # Initialize ML models
+        forecaster = TimeSeriesForecaster()
+        anomaly_detector = AnomalyDetector()
+        insights_generator = InsightsGenerator(data_loader, forecaster, anomaly_detector)
+        
+        # Initialize health checker
+        health_checker = HealthChecker(data_loader)
+        
+        logging.info("All services initialized successfully with MySQL database")
+    except Exception as e:
+        logging.error(f"Failed to initialize some services: {e}")
+        raise
 
     yield
 

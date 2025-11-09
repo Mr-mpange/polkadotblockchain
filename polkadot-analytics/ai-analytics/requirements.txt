@@ -32,10 +32,11 @@ uvicorn==0.25.0
 pydantic==2.5.2
 
 # Database connectors
-pymongo==4.6.1
-motor==3.3.2
 sqlalchemy==2.0.23
-psycopg2-binary==2.9.9
+mysql-connector-python>=8.0.0
+pymysql>=1.0.0
+alembic>=1.12.0
+aiomysql>=0.1.1
 
 # HTTP client
 requests==2.31.0
