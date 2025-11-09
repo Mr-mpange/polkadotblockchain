@@ -2,16 +2,73 @@ import axios from 'axios';
 
 class ApiService {
   constructor() {
-    this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
     this.client = axios.create({
-      baseURL: this.baseURL,
-      timeout: process.env.NODE_ENV === 'production' ? 30000 : 8000,
+      baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
+      timeout: 15000, // Increased timeout for better reliability
       headers: {
         'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+        'Expires': '0'
       },
+      withCredentials: true
     });
 
-    this.setupInterceptors();
+    // Add request interceptor
+    this.client.interceptors.request.use(
+      (config) => {
+        // You can add auth tokens here if needed
+        // const token = localStorage.getItem('token');
+        // if (token) {
+        //   config.headers.Authorization = `Bearer ${token}`;
+        // }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+
+    // Add response interceptor
+    this.client.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        // Handle common errors
+        if (error.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          console.error('API Response Error:', {
+            status: error.response.status,
+            statusText: error.response.statusText,
+            url: error.config?.url,
+            method: error.config?.method,
+            data: error.response.data
+          });
+          
+          // Handle specific status codes
+          if (error.response.status === 401) {
+            // Handle unauthorized
+            // window.location.href = '/login';
+          } else if (error.response.status === 404) {
+            // Handle not found
+          } else if (error.response.status >= 500) {
+            // Handle server errors
+          }
+        } else if (error.request) {
+          // The request was made but no response was received
+          console.error('API Request Error:', {
+            message: 'No response received',
+            url: error.config?.url,
+            method: error.config?.method
+          });
+        } else {
+          // Something happened in setting up the request that triggered an Error
+          console.error('API Setup Error:', error.message);
+        }
+        
+        return Promise.reject(error);
+      }
+    );
   }
 
   setupInterceptors() {
@@ -164,13 +221,45 @@ class ApiService {
   }
 
   // TVL endpoints
+  /**
+   * Get Total Value Locked (TVL) data
+   * @param {Object} params - Query parameters
+   * @param {number} params.days - Number of days of history to fetch
+   * @param {string} params.chainId - Optional chain ID to filter by
+   * @returns {Promise<Object>} TVL data
+   */
   async getTVL(params = {}) {
     try {
-      const response = await this.client.get('/tvl', { params });
+      console.log('Fetching TVL data with params:', params);
+      const response = await this.client.get('/tvl', { 
+        params,
+        // Enable caching for better performance
+        headers: {
+          'Cache-Control': 'max-age=300', // 5 minutes cache
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+      
+      console.log('TVL response received:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error fetching TVL data:', error);
-      throw error;
+      console.error('Error in getTVL:', {
+        message: error.message,
+        code: error.code,
+        config: error.config,
+        response: error.response?.data || 'No response data'
+      });
+      
+      // Return a default response structure on error
+      return {
+        status: 'error',
+        message: 'Failed to fetch TVL data',
+        data: {
+          total_tvl: '0',
+          chains: []
+        },
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      };
     }
   }
 

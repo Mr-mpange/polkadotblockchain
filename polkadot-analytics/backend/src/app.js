@@ -95,14 +95,52 @@ class PolkadotAnalyticsApp {
   }
 
   setupRoutes() {
+    // Debug middleware to log all incoming requests
+    this.app.use((req, res, next) => {
+      console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+      next();
+    });
+
     // API routes
-    this.app.use('/api/auth', authRoutes);
-    this.app.use('/api/parachains', parachainRoutes);
-    this.app.use('/api/tvl', tvlRoutes);
-    this.app.use('/api/activity', activityRoutes);
-    this.app.use('/api/history', historyRoutes);
-    this.app.use('/api/alerts', alertRoutes);
-    this.app.use('/api/dashboard', dashboardRoutes);
+    const apiRouter = express.Router();
+    
+    console.log('Mounting auth routes at /auth');
+    apiRouter.use('/auth', authRoutes);
+    
+    console.log('Mounting parachain routes at /parachains');
+    apiRouter.use('/parachains', parachainRoutes);
+    
+    console.log('Mounting TVL routes at /tvl');
+    apiRouter.use('/tvl', tvlRoutes);
+    
+    console.log('Mounting activity routes at /activity');
+    apiRouter.use('/activity', activityRoutes);
+    
+    console.log('Mounting history routes at /history');
+    apiRouter.use('/history', historyRoutes);
+    
+    console.log('Mounting alert routes at /alerts');
+    apiRouter.use('/alerts', alertRoutes);
+    
+    // Test route to verify dashboard endpoint
+    console.log('Mounting test dashboard route at /test-dashboard');
+    apiRouter.get('/test-dashboard', (req, res) => {
+      console.log('Test dashboard endpoint hit');
+      res.json({ message: 'Test dashboard endpoint is working' });
+    });
+    
+    // Dashboard routes
+    console.log('Mounting dashboard routes at /dashboard');
+    apiRouter.use('/dashboard', (req, res, next) => {
+      console.log('Dashboard middleware hit:', req.originalUrl);
+      next();
+    }, dashboardRoutes);
+    
+    // Mount all API routes under /api
+    this.app.use('/api', apiRouter);
+    
+    // Log all registered routes
+    console.log('All routes mounted successfully');
 
     // Root endpoint
     this.app.get('/', (req, res) => {

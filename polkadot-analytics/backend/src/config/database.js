@@ -1,51 +1,98 @@
-const mongoose = require('mongoose');
+const { Sequelize } = require('sequelize');
 const { logger } = require('../utils/logger');
+
+let sequelize;
 
 const connectDB = async () => {
   try {
-    const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/polkadot_analytics';
-
-    const options = {
-      maxPoolSize: parseInt(process.env.DB_MAX_POOL_SIZE) || 10,
-      minPoolSize: parseInt(process.env.DB_MIN_POOL_SIZE) || 2,
-      maxIdleTimeMS: 30000,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-      family: 4,
-      retryWrites: true,
-      w: 'majority'
+    // Database configuration
+    const dbConfig = {
+      database: process.env.DB_NAME || 'polkadot_analytics',
+      username: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || '',
+      host: process.env.DB_HOST || 'localhost',
+      port: process.env.DB_PORT || 3306,
+      dialect: 'mysql',
+      logging: process.env.NODE_ENV === 'development' ? console.log : false,
+      pool: {
+        max: parseInt(process.env.DB_POOL_MAX) || 10,
+        min: parseInt(process.env.DB_POOL_MIN) || 0,
+        acquire: parseInt(process.env.DB_POOL_ACQUIRE) || 30000,
+        idle: parseInt(process.env.DB_POOL_IDLE) || 10000
+      }
     };
 
-    const conn = await mongoose.connect(mongoURI, options);
+    // Create Sequelize instance
+    sequelize = new Sequelize(
+      dbConfig.database,
+      dbConfig.username,
+      dbConfig.password,
+      {
+        host: dbConfig.host,
+        port: dbConfig.port,
+        dialect: dbConfig.dialect,
+        logging: dbConfig.logging,
+        pool: dbConfig.pool,
+        define: {
+          timestamps: true,
+          underscored: true,
+          freezeTableName: true
+        }
+      }
+    );
 
-    logger.info(`MongoDB Connected: ${conn.connection.host}`);
-    logger.info(`Database: ${conn.connection.name}`);
-    logger.info(`Connection State: ${conn.connection.readyState}`);
+    // Test the connection
+    await sequelize.authenticate();
+    logger.info('Database connection has been established successfully.');
 
-    // Handle connection events
-    mongoose.connection.on('error', (err) => {
-      logger.error('MongoDB connection error:', err);
-    });
+    // Sync models with database
+    if (process.env.NODE_ENV !== 'production') {
+      await sequelize.sync({ alter: true });
+      logger.info('Database synchronized');
+    }
 
-    mongoose.connection.on('disconnected', () => {
-      logger.warn('MongoDB disconnected');
-    });
-
-    mongoose.connection.on('reconnected', () => {
-      logger.info('MongoDB reconnected');
-    });
-
-    // Graceful shutdown
-    process.on('SIGINT', async () => {
-      await mongoose.connection.close();
-      logger.info('MongoDB connection closed due to app termination');
-    });
-
-    return conn;
+    return sequelize;
   } catch (error) {
-    logger.error('MongoDB connection failed:', error);
+    logger.error('Unable to connect to the database:', error);
     throw error;
   }
 };
 
-module.exports = { connectDB };
+// Handle database connection events
+const setupDatabaseEvents = () => {
+  sequelize.connectionManager.on('connect', () => {
+    logger.info('Database connection established');
+  });
+
+  sequelize.connectionManager.on('disconnect', () => {
+    logger.warn('Database connection lost');
+  });
+
+  sequelize.connectionManager.on('error', (err) => {
+    logger.error('Database connection error:', err);
+  });
+};
+
+// Graceful shutdown
+const closeDatabase = async () => {
+  try {
+    await sequelize.close();
+    logger.info('Database connection closed');
+  } catch (error) {
+    logger.error('Error closing database connection:', error);
+    throw error;
+  }
+};
+
+// Handle application termination
+process.on('SIGINT', async () => {
+  await closeDatabase();
+  process.exit(0);
+});
+
+module.exports = {
+  sequelize,
+  connectDB,
+  closeDatabase,
+  setupDatabaseEvents
+};

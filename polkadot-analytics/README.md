@@ -84,6 +84,26 @@ polkadot-analytics/
    # AI Analytics (optional, port 8000)
    cd ai-analytics && python app.py
    ```
+## Error Type
+Console Error
+
+## Error Message
+API Request Error: {}
+
+
+    at eval (src\services\api.js:59:19)
+    at async ApiService.getDashboardData (src\services\api.js:126:24)
+
+## Code Frame
+  57 |         } else if (error.request) {
+  58 |           // The request was made but no response was received
+> 59 |           console.error('API Request Error:', {
+     |                   ^
+  60 |             message: 'No response received',
+  61 |             url: error.config?.url,
+  62 |             method: error.config?.method
+
+Next.js version: 16.0.1 (Webpack)
 
 5. **Access the Platform**:
    - Frontend: http://localhost:3000
