@@ -37,32 +37,44 @@ class PolkadotAnalyticsApp {
   }
 
   setupMiddleware() {
-    // Security middleware
+    // Enable CORS for all routes
+    const allowedOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
+    
+    // Apply CORS middleware with specific options
+    this.app.use((req, res, next) => {
+      const origin = req.headers.origin;
+      if (allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cache-Control');
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+      }
+      
+      // Handle preflight requests
+      if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+      }
+      
+      next();
+    });
+
+    // Security middleware with proper CSP
     this.app.use(helmet({
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
+          connectSrc: ["'self'", 'http://localhost:3001', 'ws://localhost:3001'],
           scriptSrc: ["'self'"],
-          imgSrc: ["'self'", "data:", "https:"],
+          styleSrc: ["'self'"],
+          imgSrc: ["'self'"],
+          fontSrc: ["'self'"],
+          objectSrc: ["'none'"],
+          upgradeInsecureRequests: []
         },
       },
+      crossOriginResourcePolicy: { policy: "cross-origin" },
+      crossOriginEmbedderPolicy: false
     }));
-
-    // CORS configuration
-    const corsOptions = {
-      origin: function (origin, callback) {
-        const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
-        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-          callback(null, true);
-        } else {
-          callback(new Error('Not allowed by CORS'));
-        }
-      },
-      credentials: true,
-      optionsSuccessStatus: 200
-    };
-    this.app.use(cors(corsOptions));
 
     // Rate limiting
     const limiter = rateLimit({
@@ -87,13 +99,15 @@ class PolkadotAnalyticsApp {
     // Compression
     this.app.use(compression());
 
-    // Health check endpoint
+    // Health check endpoint - moved to a separate method to ensure it's registered early
     this.app.get('/health', (req, res) => {
+      logger.info('Health check endpoint hit');
       res.status(200).json({
         status: 'OK',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
-        version: process.env.npm_package_version || '1.0.0'
+        version: process.env.npm_package_version || '1.0.0',
+        nodeEnv: process.env.NODE_ENV || 'development'
       });
     });
   }
