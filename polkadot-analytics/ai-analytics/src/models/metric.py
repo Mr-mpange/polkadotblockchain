@@ -16,7 +16,7 @@ class Metric(BaseModel, Base):
     value_str = Column(String(512), nullable=True)
     
     # Additional metadata
-    metadata = Column(String(512), nullable=True)
+    metric_metadata = Column('metadata', String(512), nullable=True)
     
     # Relationships
     parachain = relationship("Parachain", back_populates="metrics")

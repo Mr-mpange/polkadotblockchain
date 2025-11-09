@@ -99,6 +99,12 @@ class DataLoader:
     def is_ready(self) -> bool:
         """Check if data loader is ready."""
         return self._ready
+        
+    def get_async_session(self) -> AsyncSession:
+        """Get an async session for database operations."""
+        if not self._async_session_factory:
+            raise RuntimeError("Database connection not initialized. Call connect() first.")
+        return self._async_session_factory()
 
     async def get_parachain_data(
         self,
@@ -121,44 +127,45 @@ class DataLoader:
         Returns:
             DataFrame with timestamp and metric values
         """
-        if not self._ready:
-            await self.connect()
+        try:
+            if not self._ready:
+                await self.connect()
 
-        async with self.get_async_session() as session:
-            query = f"""
-                SELECT * FROM metrics 
-                WHERE parachain_id = :parachain_id AND metric = :metric
-            """
-            params = {"parachain_id": parachain_id, "metric": metric}
-            
-            if start_date:
-                query += " AND timestamp >= :start_date"
-                params["start_date"] = start_date
-            if end_date:
-                query += " AND timestamp <= :end_date"
-                params["end_date"] = end_date
+            async with self.get_async_session() as session:
+                query = """
+                    SELECT * FROM metrics 
+                    WHERE parachain_id = :parachain_id AND metric = :metric
+                """
+                params = {"parachain_id": parachain_id, "metric": metric}
                 
-            query += " ORDER BY timestamp ASC"
-            
-            result = await session.execute(text(query), params)
-            data = [dict(row) for row in result.mappings()]
-            
-            if not data:
-                logging.warning(f"No data found for {parachain_id} {metric}")
-                return pd.DataFrame()
+                if start_date:
+                    query += " AND timestamp >= :start_date"
+                    params["start_date"] = start_date
+                if end_date:
+                    query += " AND timestamp <= :end_date"
+                    params["end_date"] = end_date
+                    
+                query += " ORDER BY timestamp ASC"
                 
-            df = pd.DataFrame(data)
-            
-            if 'timestamp' in df.columns:
-                df['timestamp'] = pd.to_datetime(df['timestamp'])
-                df = df.set_index('timestamp')
+                result = await session.execute(text(query), params)
+                data = [dict(row) for row in result.mappings()]
+                
+                if not data:
+                    logging.warning(f"No data found for {parachain_id} {metric}")
+                    return pd.DataFrame()
+                    
+                df = pd.DataFrame(data)
+                
+                if 'timestamp' in df.columns:
+                    df['timestamp'] = pd.to_datetime(df['timestamp'])
+                    df = df.set_index('timestamp')
 
-            if 'value' in df.columns:
-                df['value'] = pd.to_numeric(df['value'], errors='coerce')
-                df = df.dropna()
+                if 'value' in df.columns:
+                    df['value'] = pd.to_numeric(df['value'], errors='coerce')
+                    df = df.dropna()
 
-            logging.info(f"Fetched {len(df)} records for {parachain_id} {metric}")
-            return df
+                logging.info(f"Fetched {len(df)} records for {parachain_id} {metric}")
+                return df
 
         except Exception as e:
             logging.error(f"Error fetching data for {parachain_id} {metric}: {e}")

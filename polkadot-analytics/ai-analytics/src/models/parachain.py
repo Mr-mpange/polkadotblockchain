@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Float, JSON, Boolean
+from sqlalchemy import Column, String, Integer, BigInteger, Float, JSON, Boolean, Text
 from .base import BaseModel, Base
 
 class Parachain(BaseModel, Base):
@@ -24,7 +24,7 @@ class Parachain(BaseModel, Base):
     active_accounts = Column(Integer, default=0)
     
     # Additional metadata
-    metadata = Column(JSON, nullable=True)
+    parachain_metadata = Column('metadata', JSON, nullable=True)
     
     def __repr__(self):
         return f"<Parachain {self.para_id}: {self.name}>"
