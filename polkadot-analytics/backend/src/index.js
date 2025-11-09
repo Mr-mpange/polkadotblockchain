@@ -4,7 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const { connectDB, sequelize } = require('./config/mysql');
-const logger = require('./utils/logger');
+const { logger } = require('./utils/logger');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
