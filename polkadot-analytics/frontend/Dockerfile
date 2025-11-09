@@ -1,14 +1,21 @@
 # Frontend Dockerfile
-FROM node:18-alpine AS builder
+FROM node:20.9.0-alpine AS builder
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files
+# Install dependencies first for better caching
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci
+# Set npm registry and increase timeout
+RUN npm config set fetch-retry-mintimeout 20000 \
+    && npm config set fetch-retry-maxtimeout 120000 \
+    && npm config set fetch-retries 5 \
+    && npm config set fetch-retry-factor 2
+
+# Install dependencies with retry logic
+RUN npm cache clean --force \
+    && (npm ci || (npm cache clean --force && npm ci))
 
 # Copy source code
 COPY . .

@@ -29,10 +29,6 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
   experimental: {
-    // Enable Turbopack
-    turbopack: {
-      // Turbopack configuration goes here
-    },
     scrollRestoration: true,
   },
   async headers() {
