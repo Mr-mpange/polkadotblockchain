@@ -11,6 +11,10 @@ const { connectDB } = require('./src/config/database');
 const { errorHandler } = require('./src/middleware/errorHandler');
 const { notFound } = require('./src/middleware/notFound');
 
+// Import test routes first
+const testRoutes = require('./src/routes/test-routes');
+
+// Original routes
 const authRoutes = require('./src/routes/auth');
 const parachainRoutes = require('./src/routes/parachains');
 const tvlRoutes = require('./src/routes/tvl');
@@ -101,46 +105,60 @@ class PolkadotAnalyticsApp {
       next();
     });
 
-    // API routes
-    const apiRouter = express.Router();
-    
-    console.log('Mounting auth routes at /auth');
-    apiRouter.use('/auth', authRoutes);
-    
-    console.log('Mounting parachain routes at /parachains');
-    apiRouter.use('/parachains', parachainRoutes);
-    
-    console.log('Mounting TVL routes at /tvl');
-    apiRouter.use('/tvl', tvlRoutes);
-    
-    console.log('Mounting activity routes at /activity');
-    apiRouter.use('/activity', activityRoutes);
-    
-    console.log('Mounting history routes at /history');
-    apiRouter.use('/history', historyRoutes);
-    
-    console.log('Mounting alert routes at /alerts');
-    apiRouter.use('/alerts', alertRoutes);
-    
-    // Test route to verify dashboard endpoint
-    console.log('Mounting test dashboard route at /test-dashboard');
-    apiRouter.get('/test-dashboard', (req, res) => {
-      console.log('Test dashboard endpoint hit');
-      res.json({ message: 'Test dashboard endpoint is working' });
-    });
-    
-    // Dashboard routes
-    console.log('Mounting dashboard routes at /dashboard');
-    apiRouter.use('/dashboard', (req, res, next) => {
-      console.log('Dashboard middleware hit:', req.originalUrl);
+    // Mount test routes first
+    console.log('Mounting test routes at /api/test');
+    this.app.use('/api/test', testRoutes);
+
+    // Mount the dashboard router directly
+    console.log('Mounting dashboard routes at /api/dashboard');
+    this.app.use('/api/dashboard', (req, res, next) => {
+      console.log('Dashboard middleware hit for path:', req.path);
       next();
     }, dashboardRoutes);
     
-    // Mount all API routes under /api
-    this.app.use('/api', apiRouter);
+    // Log all registered routes (for debugging)
+    const routes = [];
+    this.app._router.stack.forEach((middleware) => {
+      if (middleware.route) {
+        // Routes registered directly on the app
+        routes.push({
+          path: middleware.route.path,
+          methods: Object.keys(middleware.route.methods),
+          type: 'direct'
+        });
+      } else if (middleware.name === 'router') {
+        // Routes added with app.use()
+        const mountPath = middleware.regexp.toString()
+          .replace('/^', '')
+          .replace('\\/?', '')
+          .replace('(?=\\/|$)', '')
+          .replace(/\/$/, '')
+          .replace(/\\(.)/g, '$1');
+          
+        middleware.handle.stack.forEach((handler) => {
+          if (handler.route) {
+            routes.push({
+              path: `${mountPath}${handler.route.path}`,
+              methods: Object.keys(handler.route.methods),
+              type: 'mounted',
+              mountPath: mountPath
+            });
+          }
+        });
+      }
+    });
     
-    // Log all registered routes
-    console.log('All routes mounted successfully');
+    console.log('Registered routes:', JSON.stringify(routes, null, 2));
+    
+    // 404 handler for /api/*
+    this.app.use('/api', (req, res, next) => {
+      console.log(`API 404: ${req.method} ${req.originalUrl}`);
+      res.status(404).json({ 
+        status: 'error', 
+        message: 'Endpoint not found',
+        path: req.originalUrl
+      });
+    });
 
     // Root endpoint
     this.app.get('/', (req, res) => {
