@@ -596,9 +596,31 @@
     "yocto-queue": "^0.1.0",
     "z-schema": "^5.0.5"
   },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "migrate": "sequelize-cli db:migrate",
+    "seed": "sequelize-cli db:seed:all",
+    "test": "jest --coverage"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "morgan": "^1.10.0",
+    "dotenv": "^16.3.1",
+    "mysql2": "^3.6.5",
+    "sequelize": "^6.35.1",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3",
+    "winston": "^3.11.0",
+    "@polkadot/api": "^10.4.1"
+  },
   "devDependencies": {
     "jest": "^29.7.0",
-    "sequelize-cli": "^6.6.3"
+    "sequelize-cli": "^6.6.3",
+    "nodemon": "^3.0.1",
+    "supertest": "^6.3.3"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
