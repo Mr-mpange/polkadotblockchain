@@ -17,6 +17,7 @@ const tvlRoutes = require('./src/routes/tvl');
 const activityRoutes = require('./src/routes/activity');
 const historyRoutes = require('./src/routes/history');
 const alertRoutes = require('./src/routes/alerts');
+const dashboardRoutes = require('./src/routes/dashboard');
 
 const { logger } = require('./src/utils/logger');
 const { initializeScheduler } = require('./src/services/scheduler');
@@ -101,6 +102,7 @@ class PolkadotAnalyticsApp {
     this.app.use('/api/activity', activityRoutes);
     this.app.use('/api/history', historyRoutes);
     this.app.use('/api/alerts', alertRoutes);
+    this.app.use('/api/dashboard', dashboardRoutes);
 
     // Root endpoint
     this.app.get('/', (req, res) => {
