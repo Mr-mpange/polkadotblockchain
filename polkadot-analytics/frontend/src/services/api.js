@@ -2,21 +2,29 @@ import axios from 'axios';
 
 class ApiService {
   constructor() {
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    console.log('API Base URL:', baseURL);
+    
     this.client = axios.create({
-      baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
-      timeout: 15000, // Increased timeout for better reliability
+      baseURL: baseURL,
+      timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-cache',
         'Pragma': 'no-cache',
-        'Expires': '0'
+        'Expires': '0',
+        'Accept': 'application/json'
       },
-      withCredentials: true
+      withCredentials: true,
+      validateStatus: function (status) {
+        return status >= 200 && status < 500;
+      }
     });
 
     // Add request interceptor
     this.client.interceptors.request.use(
       (config) => {
+        console.log('Request:', config.method.toUpperCase(), config.url);
         // You can add auth tokens here if needed
         // const token = localStorage.getItem('token');
         // if (token) {
