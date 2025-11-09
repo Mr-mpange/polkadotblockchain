@@ -147,7 +147,8 @@ class DataLoader:
                 logging.warning(f"No data found for {parachain_id} {metric}")
                 return pd.DataFrame()
                 
-            return pd.DataFrame(data)
+            df = pd.DataFrame(data)
+            
             if 'timestamp' in df.columns:
                 df['timestamp'] = pd.to_datetime(df['timestamp'])
                 df = df.set_index('timestamp')
@@ -169,12 +170,12 @@ class DataLoader:
             await self.connect()
 
         try:
-            collection = self.db['parachains']
-            cursor = collection.find({}, {"parachain_id": 1})
-            parachains = await cursor.to_list(length=None)
-
-            parachain_ids = [p['parachain_id'] for p in parachains if 'parachain_id' in p]
-            return list(set(parachain_ids))
+            async with self.get_async_session() as session:
+                result = await session.execute(
+                    text("SELECT DISTINCT parachain_id FROM parachains")
+                )
+                parachains = result.scalars().all()
+                return list(set(parachains)) if parachains else []
 
         except Exception as e:
             logging.error(f"Error fetching parachains: {e}")
@@ -186,17 +187,13 @@ class DataLoader:
             await self.connect()
 
         try:
-            # Get all collection names
-            collections = await self.db.list_collection_names()
-
-            # Filter for data collections (exclude system collections)
-            metrics = []
-            for collection in collections:
-                if collection.endswith('_data') and collection != 'parachains_data':
-                    metric = collection.replace('_data', '')
-                    metrics.append(metric)
-
-            return metrics
+            async with self.get_async_session() as session:
+                # Get distinct metric types from the metrics table
+                result = await session.execute(
+                    text("SELECT DISTINCT metric FROM metrics")
+                )
+                metrics = result.scalars().all()
+                return list(set(metrics)) if metrics else []
 
         except Exception as e:
             logging.error(f"Error fetching metrics: {e}")
