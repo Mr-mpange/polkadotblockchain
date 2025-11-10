@@ -85,19 +85,38 @@ module.exports = (sequelize, DataTypes) => {
     ]
   });
 
-  Transaction.associate = (models) => {
-    // Define the relationship with Block
-    Transaction.belongsTo(models.Block, {
-      foreignKey: {
-        name: 'blockHash',
-        field: 'block_hash'
-      },
-      targetKey: 'hash',
-      as: 'block',
-      onDelete: 'CASCADE',
-      onUpdate: 'CASCADE'
-    });
-  };
+  // Add a flag to track if associations have been set up
+  if (!Transaction.associationsSetUp) {
+    Transaction.associate = (models) => {
+      try {
+        // Clear any existing associations
+        if (Transaction.associations) {
+          Object.keys(Transaction.associations).forEach(assoc => {
+            delete Transaction.associations[assoc];
+          });
+        }
+
+        // Define the relationship with Block
+        Transaction.belongsTo(models.Block, {
+          foreignKey: {
+            name: 'blockHash',
+            field: 'block_hash'
+          },
+          targetKey: 'hash',
+          as: 'block',
+          onDelete: 'CASCADE',
+          onUpdate: 'CASCADE',
+          constraints: true
+        });
+
+        // Mark associations as set up
+        Transaction.associationsSetUp = true;
+      } catch (error) {
+        console.error('Error in Transaction.associate:', error);
+        throw error;
+      }
+    };
+  }
 
   return Transaction;
 };

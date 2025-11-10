@@ -152,7 +152,6 @@ const connectDB = async () => {
           \`nonce\` INT NULL DEFAULT 0,
           \`free_balance\` VARCHAR(100) NULL DEFAULT '0',
           \`reserved_balance\` VARCHAR(100) NULL DEFAULT '0',
-          \`total_balance\` VARCHAR(100) NULL,
           \`is_validator\` TINYINT(1) NULL DEFAULT 0,
           \`is_nominator\` TINYINT(1) NULL DEFAULT 0,
           \`stash_address\` VARCHAR(255) NULL,
@@ -629,14 +628,14 @@ const connectDB = async () => {
         }
       };
       
-      // Create all tables in order
+      // First pass: Create all tables without foreign keys
       for (const modelName of syncOrder) {
         const model = models[modelName];
         const tableName = model.tableName || model.name;
         
-        // Skip if model doesn't exist or is already created
+        // Skip if model doesn't exist
         if (!model || !model.getTableName) {
-          console.log(`ℹ️  Model ${modelName} not found or already created, skipping...`);
+          console.log(`ℹ️  Model ${modelName} not found, skipping...`);
           continue;
         }
         
@@ -647,11 +646,13 @@ const connectDB = async () => {
           const attributes = {};
           for (const [attr, options] of Object.entries(model.rawAttributes)) {
             if (options.type.key.toLowerCase() !== 'virtual') {
-              attributes[attr] = options;
+              // Remove foreign key constraints for now
+              const { references, ...rest } = options;
+              attributes[attr] = rest;
             }
           }
           
-          // Create a temporary model without virtual fields
+          // Create a temporary model without virtual fields and foreign keys
           const tempModel = model.sequelize.define(model.name, attributes, {
             ...model.options,
             tableName: model.tableName,
@@ -661,13 +662,48 @@ const connectDB = async () => {
             freezeTableName: model.options.freezeTableName
           });
           
-          // Sync the temporary model
-          await tempModel.sync({ force: false, alter: true });
+          // Sync the temporary model with force: false, alter: false to prevent data loss
+          await tempModel.sync({ force: false, alter: false });
           console.log(`✅ Created ${tableName} table`);
         } catch (error) {
           console.error(`❌ Error creating ${tableName} table:`, error.message);
           if (error.sql) console.error('SQL:', error.sql);
           throw error;
+        }
+      }
+      
+      // Second pass: Add foreign key constraints after all tables exist
+      console.log('🔄 Adding foreign key constraints...');
+      for (const modelName of syncOrder) {
+        const model = models[modelName];
+        if (!model || !model.associations) continue;
+        
+        // Add foreign key constraints for each association
+        for (const [assocName, association] of Object.entries(model.associations)) {
+          try {
+            const foreignKey = association.foreignKey;
+            const target = association.target;
+            const targetKey = association.targetKey || 'id';
+            
+            if (foreignKey && target) {
+              const tableName = model.getTableName();
+              const targetTableName = typeof target.getTableName === 'function' ? target.getTableName() : target;
+              const constraintName = `fk_${tableName}_${foreignKey}`;
+              
+              await sequelize.query(`
+                ALTER TABLE ${tableName}
+                ADD CONSTRAINT ${constraintName}
+                FOREIGN KEY (${foreignKey}) REFERENCES ${targetTableName}(${targetKey})
+                ON DELETE CASCADE ON UPDATE CASCADE;
+              `);
+              
+              console.log(`✅ Added foreign key from ${tableName}.${foreignKey} to ${targetTableName}.${targetKey}`);
+            }
+          } catch (error) {
+            console.error(`❌ Error adding foreign key for ${modelName}.${assocName}:`, error.message);
+            if (error.sql) console.error('SQL:', error.sql);
+            // Continue with other constraints even if one fails
+          }
         }
       }
     }

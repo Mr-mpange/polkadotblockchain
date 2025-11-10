@@ -1,3 +1,8 @@
+const { Model, DataTypes } = require('sequelize');
+
+// Debug log to track model loading
+console.log('🔍 Loading Block model...');
+
 module.exports = (sequelize, DataTypes) => {
   const Block = sequelize.define('Block', {
     number: {
@@ -62,50 +67,63 @@ module.exports = (sequelize, DataTypes) => {
     collate: 'utf8mb4_unicode_ci',
     freezeTableName: true, // Prevent Sequelize from pluralizing table name
     indexes: [
-      { 
-        fields: ['hash'],
-        unique: true
-      },
+      // Primary key index is automatically created for the primary key (hash)
       { 
         fields: ['number'],
         unique: true
       },
-      { fields: ['parentHash'] },
       { fields: ['validator'] },
       { fields: ['timestamp'] }
+      // parentHash index is automatically created by the foreign key constraint
     ]
   });
 
-  Block.associate = (models) => {
-    try {
-      // A block has many transactions
-      Block.hasMany(models.Transaction, {
-        foreignKey: {
-          name: 'blockHash',
-          field: 'block_hash'
-        },
-        sourceKey: 'hash',
-        as: 'blockTransactions',
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE'
-      });
+  // Add a flag to track if associations have been set up
+  if (!Block.associationsSetUp) {
+    Block.associate = (models) => {
+      console.log('🔗 Setting up Block associations...');
+      try {
+        // Clear any existing associations
+        if (Block.associations) {
+          Object.keys(Block.associations).forEach(assoc => {
+            delete Block.associations[assoc];
+          });
+        }
 
-      // A block has many extrinsics
-      Block.hasMany(models.Extrinsic, {
-        foreignKey: {
-          name: 'blockHash',
-          field: 'block_hash'
-        },
-        sourceKey: 'hash',
-        as: 'blockExtrinsics',
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE'
-      });
-    } catch (error) {
-      console.error('Error in Block.associate:', error);
-      throw error;
-    }
-  };
+        // A block has many transactions
+        Block.hasMany(models.Transaction, {
+          foreignKey: {
+            name: 'blockHash',
+            field: 'block_hash'
+          },
+          sourceKey: 'hash',
+          as: 'transactions',
+          onDelete: 'CASCADE',
+          onUpdate: 'CASCADE',
+          constraints: true
+        });
+
+        // A block has many extrinsics
+        Block.hasMany(models.Extrinsic, {
+          foreignKey: {
+            name: 'blockHash',
+            field: 'block_hash'
+          },
+          sourceKey: 'hash',
+          as: 'extrinsics',
+          onDelete: 'CASCADE',
+          onUpdate: 'CASCADE',
+          constraints: true
+        });
+
+        // Mark associations as set up
+        Block.associationsSetUp = true;
+      } catch (error) {
+        console.error('Error in Block.associate:', error);
+        throw error;
+      }
+    };
+  }
 
   return Block;
 };

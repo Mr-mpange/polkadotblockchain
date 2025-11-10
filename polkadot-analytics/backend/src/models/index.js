@@ -21,9 +21,18 @@ const modelLoadOrder = [
 ];
 
 const initializeModels = (sequelizeInstance) => {
-  if (modelsInitialized) {
-    return models;
-  }
+  // Clear the require cache to ensure we get fresh model instances
+  modelLoadOrder.forEach(modelFile => {
+    const modelPath = path.join(__dirname, `${modelFile}.js`);
+    if (require.cache[require.resolve(modelPath)]) {
+      delete require.cache[require.resolve(modelPath)];
+    }
+  });
+
+  // Clear existing models
+  Object.keys(models).forEach(modelName => {
+    delete models[modelName];
+  });
 
   // Set the sequelize instance
   sequelize = sequelizeInstance;
@@ -33,13 +42,27 @@ const initializeModels = (sequelizeInstance) => {
     try {
       const modelPath = path.join(__dirname, `${modelFile}.js`);
       if (fs.existsSync(modelPath)) {
-        const model = require(modelPath)(sequelize, DataTypes);
-        if (model) {
-          models[model.name] = model;
+        // Clear the module from require cache
+        if (require.cache[require.resolve(modelPath)]) {
+          delete require.cache[require.resolve(modelPath)];
+        }
+        
+        // Require the model
+        const modelModule = require(modelPath);
+        if (typeof modelModule === 'function') {
+          const model = modelModule(sequelize, DataTypes);
+          if (model) {
+            // Clear any existing model with the same name
+            if (models[model.name]) {
+              delete models[model.name];
+            }
+            models[model.name] = model;
+          }
         }
       }
     } catch (error) {
-      console.error(`Error loading model ${modelFile}:`, error);
+      console.error(`❌ Error loading model ${modelFile}:`, error);
+      throw error; // Rethrow to prevent silent failures
     }
   });
 
@@ -48,10 +71,13 @@ const initializeModels = (sequelizeInstance) => {
     try {
       const modelName = modelFile.charAt(0).toUpperCase() + modelFile.slice(1);
       if (models[modelName] && typeof models[modelName].associate === 'function') {
+        console.log(`🔗 Setting up associations for ${modelName}...`);
         models[modelName].associate(models);
+        console.log(`✅ Successfully set up associations for ${modelName}`);
       }
     } catch (error) {
-      console.error(`Error setting up associations for ${modelFile}:`, error);
+      console.error(`❌ Error setting up associations for ${modelFile}:`, error);
+      throw error; // Rethrow to prevent silent failures
     }
   });
 
