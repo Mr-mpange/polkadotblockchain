@@ -107,11 +107,22 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Account.associate = function(models) {
+    // Association with Validator (for accounts that are validators)
     Account.belongsTo(models.Validator, {
       foreignKey: 'stashAddress',
       targetKey: 'stashAddress',
-      as: 'validatorInfo'
+      as: 'validator',
+      constraints: false // We're handling constraints manually
     });
+    
+    // If you need to reference the same model with a different alias, 
+    // make sure to use a different alias name
+    // For example, if you need another reference to Validator:
+    // Account.belongsTo(models.Validator, {
+    //   foreignKey: 'someOtherField',
+    //   as: 'anotherValidatorReference',
+    //   constraints: false
+    // });
   };
 
   return Account;

@@ -73,10 +73,22 @@ module.exports = (sequelize, DataTypes) => {
     ]
   });
 
-  // Remove associations that cause automatic foreign key creation
-  // We'll handle these manually in database.js
+  // Define associations without creating foreign key constraints
+  // We'll handle the constraints manually in database.js
   Event.associate = (models) => {
-    // No associations here - we'll add them manually after tables are created
+    Event.belongsTo(models.Extrinsic, {
+      foreignKey: 'extrinsicIdx',
+      targetKey: 'indexInBlock',
+      as: 'extrinsic',
+      constraints: false // Don't create foreign key constraint here
+    });
+    
+    Event.belongsTo(models.Block, {
+      foreignKey: 'blockHash',
+      targetKey: 'hash',
+      as: 'block',
+      constraints: false // Don't create foreign key constraint here
+    });
   };
 
   // Add beforeSave hook to update data0 and data1 when data changes

@@ -88,7 +88,13 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     }
   }, {
+    // Explicitly set table name to ensure consistency
+    tableName: 'extrinsics',
+    freezeTableName: true, // Prevent Sequelize from pluralizing the table name
     timestamps: true,
+    // Add charset and collation to match the database
+    charset: 'utf8mb4',
+    collate: 'utf8mb4_unicode_ci',
     indexes: [
       { fields: ['blockNumber'] },
       { fields: ['blockHash'] },
@@ -96,7 +102,11 @@ module.exports = (sequelize, DataTypes) => {
       { fields: ['section', 'method'] },
       { fields: ['hash'] },
       { fields: ['timestamp'] },
-      { fields: ['argsText'] }
+      { fields: ['argsText'] },
+      { 
+        fields: ['indexInBlock'],
+        unique: true  // Make indexInBlock unique for foreign key reference
+      }
     ]
   });
 

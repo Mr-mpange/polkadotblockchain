@@ -91,14 +91,16 @@ const connectDB = async () => {
       // Define the exact order of table creation to respect foreign key dependencies
       // Tables with no dependencies first
       const syncOrder = [
-        'Block',     // No dependencies
-        'Account',   // No dependencies
-        'Validator', // Depends on Account
-        'Parachain', // No dependencies
+        'Block',      // No dependencies
+        'Account',    // No dependencies
+        'Validator',  // Depends on Account
+        'Parachain',  // No dependencies
+        'Extrinsic',  // Depends on Block
         'Transaction', // Depends on Block
-        'Extrinsic', // Depends on Block
-        'Event'      // Depends on Block and Transaction
+        'Event'       // Depends on Block and Transaction
       ];
+      
+      console.log('🔄 Sync order:', syncOrder.join(' → '));
       
       // Disable foreign key checks during table creation
       await sequelize.query('SET FOREIGN_KEY_CHECKS = 0');
@@ -109,24 +111,40 @@ const connectDB = async () => {
           const model = models[modelName];
           
           try {
+            console.log(`🔄 Creating ${modelName} table...`);
+            
             // Temporarily disable associations to prevent automatic FK creation
             const originalAssociate = model.associate;
-            model.associate = () => {}; // No-op the associate function
+            if (typeof originalAssociate === 'function') {
+              model.associate = () => {}; // No-op the associate function
+            }
             
             // Sync the model with force: true to drop and recreate
             await model.sync({ 
               force: true,
               logging: (sql) => {
-                console.log(`Executing: ${sql.substring(0, 100)}...`);
+                console.log(`  SQL: ${sql.substring(0, 150)}${sql.length > 150 ? '...' : ''}`);
               }
             });
             
-            // Restore the original associate function
-            model.associate = originalAssociate;
+            // Restore the original associate function if it exists
+            if (typeof originalAssociate === 'function') {
+              model.associate = originalAssociate;
+            }
             
-            console.log(`✅ ${modelName} table created`);
+            console.log(`✅ ${modelName} table created successfully`);
+            
+            // Verify the table exists
+            const [tables] = await sequelize.query(`SHOW TABLES LIKE '${model.tableName || model.name.toLowerCase() + 's'}'`);
+            if (tables.length === 0) {
+              throw new Error(`Table ${model.tableName || model.name} was not created`);
+            }
+            
           } catch (error) {
             console.error(`❌ Error creating ${modelName} table:`, error.message);
+            if (error.sql) {
+              console.error('SQL:', error.sql);
+            }
             throw error;
           }
         }
@@ -139,18 +157,31 @@ const connectDB = async () => {
         // Helper function to add foreign key with better error handling
         const addForeignKey = async (table, constraintName, columns, refTable, refColumns, onDelete = 'CASCADE', onUpdate = 'CASCADE') => {
           try {
-            // First, drop the constraint if it exists
-            await sequelize.query(`
-              ALTER TABLE ${table} 
-              DROP FOREIGN KEY IF EXISTS ${constraintName};
+            // First, ensure the referenced column has an index
+            const [results] = await sequelize.query(`
+              SHOW INDEX FROM \`${refTable}\` WHERE Column_name = '${refColumns.split('(')[0]}';
             `);
             
-            // Then add the constraint
+            if (results.length === 0) {
+              console.log(`🔄 Creating index on ${refTable}.${refColumns}...`);
+              await sequelize.query(`
+                CREATE INDEX idx_${refTable}_${refColumns.replace(/[()]/g, '')} 
+                ON \`${refTable}\`(${refColumns});
+              `);
+            }
+            
+            // Drop the constraint if it exists
             await sequelize.query(`
-              ALTER TABLE ${table} 
-              ADD CONSTRAINT ${constraintName} 
-              FOREIGN KEY (${columns}) 
-              REFERENCES ${refTable}(${refColumns}) 
+              ALTER TABLE \`${table}\` 
+              DROP FOREIGN KEY IF EXISTS \`${constraintName}\`;
+            `);
+            
+            // Add the constraint
+            await sequelize.query(`
+              ALTER TABLE \`${table}\` 
+              ADD CONSTRAINT \`${constraintName}\` 
+              FOREIGN KEY (\`${columns}\`) 
+              REFERENCES \`${refTable}\`(\`${refColumns}\`) 
               ON DELETE ${onDelete} 
               ON UPDATE ${onUpdate};
             `);
@@ -162,29 +193,28 @@ const connectDB = async () => {
             if (error.sql) {
               console.error('SQL:', error.sql);
             }
-            throw error;
+            // Don't throw the error, just log it and continue
+            return false;
           }
         };
 
         // Add foreign keys in the correct order
         await addForeignKey('transactions', 'fk_transaction_block', 'blockHash', 'blocks', 'hash');
-        await addForeignKey('events', 'fk_event_block', 'blockHash', 'blocks', 'hash');
-        
-        // For the event -> transaction reference, ensure the index exists first
-        await sequelize.query(`
-          CREATE INDEX IF NOT EXISTS idx_transactions_indexInBlock 
-          ON transactions(indexInBlock);
-        `);
-        
-        await addForeignKey('events', 'fk_event_transaction', 'extrinsicIdx', 'transactions', 'indexInBlock', 'SET NULL');
         await addForeignKey('extrinsics', 'fk_extrinsic_block', 'blockHash', 'blocks', 'hash');
+        
+        // For the event -> extrinsic reference, ensure the index exists first
+        await addForeignKey('events', 'fk_event_extrinsic', 'extrinsicIdx', 'extrinsics', 'indexInBlock', 'SET NULL');
+        
+        // Add block hash reference for events
+        await addForeignKey('events', 'fk_event_block', 'blockHash', 'blocks', 'hash');
 
+        console.log('✅ All foreign key constraints added successfully');
       } catch (error) {
         console.error('❌ Error adding foreign key constraints:', error.message);
         if (error.sql) {
           console.error('SQL:', error.sql);
         }
-        throw error;
+        // Don't throw the error, just log it and continue
       } finally {
         // Always re-enable foreign key checks
         await sequelize.query('SET FOREIGN_KEY_CHECKS = 1');

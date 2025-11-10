@@ -86,16 +86,20 @@ module.exports = (sequelize, DataTypes) => {
     // Accounts associated with this validator
     Validator.hasMany(models.Account, {
       foreignKey: 'stashAddress',
-      as: 'accounts'
+      sourceKey: 'stashAddress',
+      as: 'accounts',
+      constraints: false // We're handling constraints manually
     });
     
     // Nominators for this validator
     Validator.hasMany(models.Account, {
       foreignKey: 'stashAddress',
+      sourceKey: 'stashAddress',
       as: 'nominators',
       scope: {
         isNominator: true
-      }
+      },
+      constraints: false // We're handling constraints manually
     });
   };
 
