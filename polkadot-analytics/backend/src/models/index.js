@@ -1,41 +1,68 @@
 const { Sequelize, DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database');
 const fs = require('fs');
 const path = require('path');
 
-// Import all models
+// This will be set by the database configuration
+let sequelize;
+
+// Cache for models to prevent duplicate loading
 const models = {};
+let modelsInitialized = false;
 
-// Read all model files
-const modelFiles = fs.readdirSync(__dirname)
-  .filter(file => 
-    file !== 'index.js' && 
-    file.endsWith('.js') &&
-    !file.endsWith('.test.js')
-  );
+// Define the correct order for model initialization to handle dependencies
+const modelLoadOrder = [
+  'account',
+  'validator',
+  'block',
+  'transaction',
+  'extrinsic',
+  'event',
+  'parachain'
+];
 
-// Initialize each model
-modelFiles.forEach(file => {
-  try {
-    const model = require(path.join(__dirname, file))(sequelize, DataTypes);
-    if (model) {
-      models[model.name] = model;
+const initializeModels = (sequelizeInstance) => {
+  if (modelsInitialized) {
+    return models;
+  }
+
+  // Set the sequelize instance
+  sequelize = sequelizeInstance;
+
+  // First pass: Load all models
+  modelLoadOrder.forEach(modelFile => {
+    try {
+      const modelPath = path.join(__dirname, `${modelFile}.js`);
+      if (fs.existsSync(modelPath)) {
+        const model = require(modelPath)(sequelize, DataTypes);
+        if (model) {
+          models[model.name] = model;
+        }
+      }
+    } catch (error) {
+      console.error(`Error loading model ${modelFile}:`, error);
     }
-  } catch (error) {
-    console.error(`Error loading model ${file}:`, error);
-  }
-});
+  });
 
-// Set up associations
-Object.keys(models).forEach(modelName => {
-  if (models[modelName] && typeof models[modelName].associate === 'function') {
-    models[modelName].associate(models);
-  }
-});
+  // Second pass: Set up associations
+  modelLoadOrder.forEach(modelFile => {
+    try {
+      const modelName = modelFile.charAt(0).toUpperCase() + modelFile.slice(1);
+      if (models[modelName] && typeof models[modelName].associate === 'function') {
+        models[modelName].associate(models);
+      }
+    } catch (error) {
+      console.error(`Error setting up associations for ${modelFile}:`, error);
+    }
+  });
 
-// Export models and sequelize instance
+  modelsInitialized = true;
+  return models;
+};
+
+// Export the initialization function and empty models object
 module.exports = {
-  ...models,
-  sequelize,
-  Sequelize
+  models,
+  initializeModels,
+  getInitializedModels: () => models,
+  getSequelize: () => sequelize
 };

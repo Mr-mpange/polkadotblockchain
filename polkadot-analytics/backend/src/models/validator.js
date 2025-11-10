@@ -83,17 +83,17 @@ module.exports = (sequelize, DataTypes) => {
   
   // Define associations
   Validator.associate = function(models) {
-    // Accounts associated with this validator
-    Validator.hasMany(models.Account, {
+    // Validator's own account
+    Validator.belongsTo(models.Account, {
       foreignKey: 'stashAddress',
-      sourceKey: 'stashAddress',
-      as: 'accounts',
-      constraints: false // We're handling constraints manually
+      targetKey: 'stashAddress',
+      as: 'validatorAccount',
+      constraints: false
     });
     
     // Nominators for this validator
     Validator.hasMany(models.Account, {
-      foreignKey: 'stashAddress',
+      foreignKey: 'validatorStash',
       sourceKey: 'stashAddress',
       as: 'nominators',
       scope: {

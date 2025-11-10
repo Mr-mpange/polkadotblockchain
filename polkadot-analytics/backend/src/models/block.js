@@ -64,7 +64,14 @@ module.exports = (sequelize, DataTypes) => {
     collate: 'utf8mb4_unicode_ci',
     freezeTableName: true, // Prevent Sequelize from pluralizing table name
     indexes: [
-      { fields: ['number'] },
+      { 
+        fields: ['hash'],
+        unique: true
+      },
+      { 
+        fields: ['number'],
+        unique: true
+      },
       { fields: ['parentHash'] },
       { fields: ['validator'] },
       { fields: ['timestamp'] }

@@ -44,6 +44,12 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       field: 'stash_address'
     },
+    validatorStash: {
+      type: DataTypes.STRING(48),
+      allowNull: true,
+      field: 'validator_stash',
+      comment: 'Reference to the validator this account is nominating'
+    },
     identity: {
       type: DataTypes.JSON,
       allowNull: true,
@@ -93,17 +99,11 @@ module.exports = (sequelize, DataTypes) => {
     }
   }, {
     tableName: 'accounts',
+    freezeTableName: true, // Prevent Sequelize from pluralizing the table name
     timestamps: true,
     underscored: true,
-    indexes: [
-      { fields: ['stash_address'] },
-      { fields: ['is_validator'] },
-      { fields: ['is_nominator'] },
-      { fields: ['is_contract'] }
-      // Note: Removed JSON index as it's not supported in MariaDB
-      // If you need to search JSON fields, consider using a full-text search solution
-      // or storing the searchable fields in dedicated columns
-    ]
+    // We'll create indexes manually after table creation
+    indexes: []
   });
 
   Account.associate = function(models) {
@@ -112,17 +112,16 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'stashAddress',
       targetKey: 'stashAddress',
       as: 'validator',
-      constraints: false // We're handling constraints manually
+      constraints: false
     });
     
-    // If you need to reference the same model with a different alias, 
-    // make sure to use a different alias name
-    // For example, if you need another reference to Validator:
-    // Account.belongsTo(models.Validator, {
-    //   foreignKey: 'someOtherField',
-    //   as: 'anotherValidatorReference',
-    //   constraints: false
-    // });
+    // Association for nominators to their validator
+    Account.belongsTo(models.Validator, {
+      foreignKey: 'validatorStash',
+      targetKey: 'stashAddress',
+      as: 'nominatedValidator',
+      constraints: false
+    });
   };
 
   return Account;

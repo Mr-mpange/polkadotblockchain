@@ -95,6 +95,8 @@ module.exports = (sequelize, DataTypes) => {
     // Add charset and collation to match the database
     charset: 'utf8mb4',
     collate: 'utf8mb4_unicode_ci',
+    // Define indexes for the table
+    // We'll create them manually after the table is created
     indexes: [
       { fields: ['blockNumber'] },
       { fields: ['blockHash'] },
