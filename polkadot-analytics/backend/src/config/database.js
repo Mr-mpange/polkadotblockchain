@@ -1,9 +1,13 @@
+console.log('🔌 Loading database configuration...');
+
 const { Sequelize } = require('sequelize');
 const { logger } = require('../utils/logger');
 
 let sequelize;
 
 const connectDB = async () => {
+  console.log('🔄 Attempting to connect to database...');
+  
   try {
     // Database configuration
     const dbConfig = {

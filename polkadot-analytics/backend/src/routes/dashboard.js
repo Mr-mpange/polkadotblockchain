@@ -1,6 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const logger = require('../utils/logger');
+
+// Debug middleware for all dashboard routes
+router.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] Dashboard route hit: ${req.method} ${req.originalUrl}`);
+  next();
+});
 
 // Enable CORS for all routes
 router.use((req, res, next) => {
@@ -46,13 +51,27 @@ router.get('/debug', (req, res) => {
   });
 });
 
-// GET /api/dashboard - Get dashboard summary data
+// GET / - Get dashboard summary data
 router.get('/', (req, res) => {
+  console.log('Dashboard root route handler called');
   const requestTime = new Date().toISOString();
-  console.log(`[${requestTime}] GET /api/dashboard route handler called`);
+  console.log(`[${requestTime}] GET /api/dashboard`);
   
   try {
-    logger.info('GET /api/dashboard');
+    // Mock data
+    const mockData = {
+      status: 'success',
+      data: {
+        total_parachains: 15,
+        active_parachains: 12,
+        total_tvl: 1250000000,
+        recent_activity: [
+          { id: 1, event: 'New block', timestamp: new Date().toISOString() },
+          { id: 2, event: 'Parachain updated', timestamp: new Date().toISOString() }
+        ]
+      }
+    };
+    
     console.log('Sending mock data:', JSON.stringify(mockData, null, 2));
     
     // Add some debug headers
@@ -63,14 +82,12 @@ router.get('/', (req, res) => {
   } catch (error) {
     const errorTime = new Date().toISOString();
     console.error(`[${errorTime}] Dashboard error:`, error);
-    logger.error('Dashboard error:', error);
     
     return res.status(500).json({ 
       status: 'error',
       message: 'Failed to fetch dashboard data',
       timestamp: errorTime,
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
