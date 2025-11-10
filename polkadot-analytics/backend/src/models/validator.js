@@ -87,7 +87,7 @@ module.exports = (sequelize, DataTypes) => {
     Validator.belongsTo(models.Account, {
       foreignKey: 'stashAddress',
       targetKey: 'stashAddress',
-      as: 'validatorAccount',
+      as: 'account',
       constraints: false
     });
     
@@ -95,7 +95,7 @@ module.exports = (sequelize, DataTypes) => {
     Validator.hasMany(models.Account, {
       foreignKey: 'validatorStash',
       sourceKey: 'stashAddress',
-      as: 'nominators',
+      as: 'validatorNominators',
       scope: {
         isNominator: true
       },

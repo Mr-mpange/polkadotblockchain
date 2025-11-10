@@ -5,12 +5,16 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       allowNull: false
     },
+    // blockHash is the foreign key to blocks table
     blockHash: {
       type: DataTypes.STRING(66),
       allowNull: false,
       field: 'block_hash',
-      // Remove the foreign key constraint from the model definition
-      // We'll handle it in the database configuration
+      comment: 'References blocks(hash). Foreign key to the block containing this transaction.',
+      references: {
+        model: 'blocks',
+        key: 'hash'
+      }
     },
     blockNumber: {
       type: DataTypes.INTEGER,
@@ -41,11 +45,13 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
       unique: true,
+      field: 'index_in_block',
       comment: 'Unique index of the transaction within the block'
     },
     success: {
       type: DataTypes.BOOLEAN,
-      allowNull: false
+      allowNull: false,
+      defaultValue: true
     },
     error: {
       type: DataTypes.JSON,
@@ -56,38 +62,40 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     fee: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: true
     },
     tip: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: true
     }
   }, {
+    sequelize,
     tableName: 'transactions',
     timestamps: true,
     charset: 'utf8mb4',
     collate: 'utf8mb4_unicode_ci',
-    // Disable automatic pluralization
-    freezeTableName: true,
     indexes: [
+      { fields: ['block_hash'] },
       { fields: ['blockNumber'] },
-      { fields: ['blockHash'] },
       { fields: ['signer'] },
       { fields: ['section', 'method'] },
       { fields: ['timestamp'] },
-      { fields: ['indexInBlock'], unique: true }
+      { fields: ['index_in_block'], unique: true }
     ]
   });
 
   Transaction.associate = (models) => {
+    // Define the relationship with Block
     Transaction.belongsTo(models.Block, {
-      foreignKey: 'blockHash',
+      foreignKey: {
+        name: 'blockHash',
+        field: 'block_hash'
+      },
       targetKey: 'hash',
       as: 'block',
       onDelete: 'CASCADE',
-      onUpdate: 'CASCADE',
-      constraints: true
+      onUpdate: 'CASCADE'
     });
   };
 

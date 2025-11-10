@@ -117,12 +117,16 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'blockHash',
       targetKey: 'hash',
       as: 'block',
-      constraints: false // We're handling constraints manually in database.js
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     });
+    
     Extrinsic.hasMany(models.Event, {
       foreignKey: 'extrinsicIdx',
       sourceKey: 'indexInBlock',
-      as: 'events'
+      as: 'events',
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     });
   };
 

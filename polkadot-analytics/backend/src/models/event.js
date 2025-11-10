@@ -73,21 +73,22 @@ module.exports = (sequelize, DataTypes) => {
     ]
   });
 
-  // Define associations without creating foreign key constraints
-  // We'll handle the constraints manually in database.js
+  // Define associations
   Event.associate = (models) => {
     Event.belongsTo(models.Extrinsic, {
       foreignKey: 'extrinsicIdx',
       targetKey: 'indexInBlock',
       as: 'extrinsic',
-      constraints: false // Don't create foreign key constraint here
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     });
     
     Event.belongsTo(models.Block, {
       foreignKey: 'blockHash',
       targetKey: 'hash',
       as: 'block',
-      constraints: false // Don't create foreign key constraint here
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     });
   };
 

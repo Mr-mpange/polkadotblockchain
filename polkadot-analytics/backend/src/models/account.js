@@ -116,7 +116,7 @@ module.exports = (sequelize, DataTypes) => {
     Account.belongsTo(models.Validator, {
       foreignKey: 'stashAddress',
       targetKey: 'stashAddress',
-      as: 'validator',
+      as: 'accountValidatorInfo',
       constraints: false
     });
     
@@ -124,7 +124,7 @@ module.exports = (sequelize, DataTypes) => {
     Account.belongsTo(models.Validator, {
       foreignKey: 'validatorStash',
       targetKey: 'stashAddress',
-      as: 'nominatedValidator',
+      as: 'nominatedValidatorInfo',
       constraints: false
     });
   };

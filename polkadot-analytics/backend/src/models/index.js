@@ -11,13 +11,13 @@ let modelsInitialized = false;
 
 // Define the correct order for model initialization to handle dependencies
 const modelLoadOrder = [
-  'account',
-  'validator',
-  'block',
-  'transaction',
-  'extrinsic',
-  'event',
-  'parachain'
+  'block',      // Base model with no dependencies
+  'account',    // Depends on block
+  'validator',  // Depends on account
+  'parachain',  // Depends on block
+  'extrinsic',  // Depends on block
+  'transaction',// Depends on block and extrinsic
+  'event'       // Depends on block and extrinsic
 ];
 
 const initializeModels = (sequelizeInstance) => {

@@ -1,22 +1,20 @@
 module.exports = (sequelize, DataTypes) => {
   const Block = sequelize.define('Block', {
-    id: {
-      type: DataTypes.STRING(66),
-      primaryKey: true,
-      allowNull: false
-    },
     number: {
       type: DataTypes.INTEGER,
       unique: true,
       allowNull: false
     },
     hash: {
-      type: DataTypes.STRING(66, 'utf8mb4'),
-      unique: true,
+      type: DataTypes.STRING(66),
+      primaryKey: true,
       allowNull: false,
+      field: 'hash',
+      comment: 'Primary key, block hash',
       charset: 'utf8mb4',
       collate: 'utf8mb4_unicode_ci'
     },
+    // Remove the id field as we're using hash as primary key
     parentHash: {
       type: DataTypes.STRING(66),
       allowNull: false
@@ -79,14 +77,34 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Block.associate = (models) => {
-    Block.hasMany(models.Transaction, {
-      foreignKey: 'blockHash',
-      sourceKey: 'hash',
-      as: 'transactions',
-      onDelete: 'CASCADE',
-      onUpdate: 'CASCADE',
-      constraints: true
-    });
+    try {
+      // A block has many transactions
+      Block.hasMany(models.Transaction, {
+        foreignKey: {
+          name: 'blockHash',
+          field: 'block_hash'
+        },
+        sourceKey: 'hash',
+        as: 'blockTransactions',
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+      });
+
+      // A block has many extrinsics
+      Block.hasMany(models.Extrinsic, {
+        foreignKey: {
+          name: 'blockHash',
+          field: 'block_hash'
+        },
+        sourceKey: 'hash',
+        as: 'blockExtrinsics',
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+      });
+    } catch (error) {
+      console.error('Error in Block.associate:', error);
+      throw error;
+    }
   };
 
   return Block;
