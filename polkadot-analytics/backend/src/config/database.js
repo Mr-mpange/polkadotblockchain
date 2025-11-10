@@ -678,19 +678,24 @@ const connectDB = async () => {
         // First, ensure the blocks.hash column has the correct character set and collation
         try {
           await sequelize.query(`
+            -- Drop existing index if it exists
+            DROP INDEX IF EXISTS uq_blocks_hash ON blocks;
+            
+            -- Modify the hash column to ensure it has the correct character set and collation
             ALTER TABLE blocks 
             MODIFY COLUMN hash VARCHAR(66) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL;
             
-            CREATE UNIQUE INDEX IF NOT EXISTS uq_blocks_hash ON blocks(hash);
+            -- Recreate the index
+            CREATE UNIQUE INDEX uq_blocks_hash ON blocks(hash);
           `);
           console.log('✅ Updated blocks.hash with correct character set and collation');
         } catch (error) {
           console.error('❌ Error updating blocks.hash:', error.message);
+          if (error.sql) console.error('SQL:', error.sql);
         }
         
-        // Update transactions.block_hash to match the exact character set and collation of blocks.hash
+        // Handle transactions table foreign key
         try {
-          // First, drop any existing foreign key constraints
           await sequelize.query(`
             SET FOREIGN_KEY_CHECKS = 0;
             
@@ -700,22 +705,41 @@ const connectDB = async () => {
             SET @constraintname = (SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS 
                                  WHERE TABLE_SCHEMA = @dbname 
                                  AND TABLE_NAME = @tablename 
-                                 AND CONSTRAINT_TYPE = 'FOREIGN_KEY');
+                                 AND CONSTRAINT_TYPE = 'FOREIGN_KEY'
+                                 LIMIT 1);
             
-            SET @s = CONCAT('ALTER TABLE ', @tablename, ' DROP FOREIGN KEY ', @constraintname, ';');
+            SET @s = IF(@constraintname IS NOT NULL, 
+                       CONCAT('ALTER TABLE ', @tablename, ' DROP FOREIGN KEY ', @constraintname, ';'),
+                       'SELECT \'No foreign key to drop\' AS message;');
             
             PREPARE stmt FROM @s;
             EXECUTE stmt;
             DEALLOCATE PREPARE stmt;
             
-            -- Update the column definition
+            -- Ensure the block_hash column exists and has the correct definition
             ALTER TABLE transactions 
             MODIFY COLUMN block_hash VARCHAR(66) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL;
             
-            -- Add the foreign key constraint
+            -- Create an index on block_hash if it doesn't exist
+            SET @index_exists = (SELECT COUNT(1) 
+                               FROM information_schema.STATISTICS 
+                               WHERE TABLE_SCHEMA = @dbname 
+                               AND TABLE_NAME = @tablename 
+                               AND INDEX_NAME = 'idx_transactions_block_hash');
+            
+            SET @s = IF(@index_exists = 0, 
+                       'CREATE INDEX idx_transactions_block_hash ON transactions(block_hash);',
+                       'SELECT \'Index already exists\' AS message;');
+            
+            PREPARE stmt FROM @s;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+            
+            -- Add the foreign key constraint with explicit options
             ALTER TABLE transactions 
             ADD CONSTRAINT fk_transactions_block_hash 
-            FOREIGN KEY (block_hash) REFERENCES blocks(hash)
+            FOREIGN KEY (block_hash) 
+            REFERENCES blocks(hash)
             ON DELETE CASCADE
             ON UPDATE CASCADE;
             

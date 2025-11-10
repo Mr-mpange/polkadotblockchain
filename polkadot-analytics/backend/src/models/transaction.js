@@ -9,14 +9,8 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(66),
       allowNull: false,
       field: 'block_hash',
-      charset: 'utf8mb4',
-      collate: 'utf8mb4_unicode_ci',
-      references: {
-        model: 'blocks',
-        key: 'hash'
-      },
-      onUpdate: 'CASCADE',
-      onDelete: 'CASCADE'
+      // Remove the foreign key constraint from the model definition
+      // We'll handle it in the database configuration
     },
     blockNumber: {
       type: DataTypes.INTEGER,
