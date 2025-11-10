@@ -6,13 +6,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     blockHash: {
-      type: DataTypes.STRING(66),
+      type: DataTypes.STRING(66, 'utf8mb4'),
       allowNull: false,
-      references: {
-        model: 'blocks',  // This references the table name, not the model name
-        key: 'hash'
-      },
-      onDelete: 'CASCADE'
+      charset: 'utf8mb4',
+      collate: 'utf8mb4_unicode_ci'
     },
     blockNumber: {
       type: DataTypes.INTEGER,
@@ -41,7 +38,9 @@ module.exports = (sequelize, DataTypes) => {
     },
     indexInBlock: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: false,
+      unique: true,
+      comment: 'Unique index of the transaction within the block'
     },
     success: {
       type: DataTypes.BOOLEAN,
@@ -64,13 +63,19 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     }
   }, {
+    tableName: 'transactions',
     timestamps: true,
+    charset: 'utf8mb4',
+    collate: 'utf8mb4_unicode_ci',
+    // Disable automatic pluralization
+    freezeTableName: true,
     indexes: [
       { fields: ['blockNumber'] },
       { fields: ['blockHash'] },
       { fields: ['signer'] },
       { fields: ['section', 'method'] },
-      { fields: ['timestamp'] }
+      { fields: ['timestamp'] },
+      { fields: ['indexInBlock'], unique: true }
     ]
   });
 
@@ -78,7 +83,10 @@ module.exports = (sequelize, DataTypes) => {
     Transaction.belongsTo(models.Block, {
       foreignKey: 'blockHash',
       targetKey: 'hash',
-      as: 'block'
+      as: 'block',
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
+      constraints: true
     });
   };
 

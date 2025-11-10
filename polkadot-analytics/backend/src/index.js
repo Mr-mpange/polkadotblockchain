@@ -20,6 +20,8 @@ const cors = require('cors');
 
 // Import routes
 const dashboardRoutes = require('./routes/dashboard');
+const parachainsRoutes = require('./routes/parachains');
+const tvlRoutes = require('./routes/tvl');
 
 async function startServer() {
   try {
@@ -72,6 +74,18 @@ async function startServer() {
       console.log('Dashboard router hit:', req.originalUrl);
       next();
     }, dashboardRoutes);
+    
+    // Mount parachains routes under /api/parachains
+    app.use('/api/parachains', (req, res, next) => {
+      console.log('Parachains router hit:', req.originalUrl);
+      next();
+    }, parachainsRoutes);
+    
+    // Mount TVL routes under /api/tvl
+    app.use('/api/tvl', (req, res, next) => {
+      console.log('TVL router hit:', req.originalUrl);
+      next();
+    }, tvlRoutes);
     
     // Test route after mounting
     app.get('/api/test-after', (req, res) => {

@@ -1,54 +1,48 @@
-const { Parachain, Metric } = require('../models');
-const { Op } = require('sequelize');
-const { logger } = require('../utils/logger');
+const { Parachain, TVL, sequelize } = require('../models');
+const { Op, literal } = require('sequelize');
 
 // @desc    Get total value locked across all parachains
 // @route   GET /api/tvl
 // @access  Public
 exports.getTVL = async (req, res) => {
   try {
-    logger.info('Fetching TVL data...');
+    console.log('🔍 Fetching TVL data...');
     
-    // Get all parachains with their current TVL
-    const tvlData = await Parachain.findAll({
+    // Get the latest TVL data for each parachain
+    const latestTVLs = await TVL.findAll({
       attributes: [
-        'id', 
-        'name', 
-        'total_stake',
-        'token_symbol',
-        'is_active'
+        'parachainId',
+        [sequelize.fn('MAX', sequelize.col('total_value_locked')), 'total_stake'],
+        [sequelize.literal('(SELECT name FROM parachains WHERE parachains.id = TVL.parachain_id)'), 'name'],
+        [sequelize.literal('(SELECT token_symbol FROM parachains WHERE parachains.id = TVL.parachain_id)'), 'token_symbol'],
+        [sequelize.literal('true'), 'is_active']
       ],
-      where: {
-        is_active: true
-      },
-      order: [['total_stake', 'DESC']]
+      group: ['parachainId'],
+      raw: true
     });
 
     // Calculate total TVL across all parachains
-    const totalTVL = tvlData.reduce((sum, chain) => {
-      return sum + BigInt(chain.total_stake || 0);
+    const totalTVL = latestTVLs.reduce((sum, chain) => {
+      return sum + BigInt(chain.total_stake || '0');
     }, 0n);
 
-    logger.info(`Successfully fetched TVL data for ${tvlData.length} parachains`);
+    console.log(`✅ Successfully fetched TVL data for ${latestTVLs.length} parachains`);
     
     res.json({
       status: 'success',
       data: {
         total_tvl: totalTVL.toString(),
-        chains: tvlData.map(chain => ({
-          id: chain.id,
+        chains: latestTVLs.map(chain => ({
+          id: chain.parachainId,
           name: chain.name,
-          total_stake: chain.total_stake.toString(),
+          total_stake: chain.total_stake || '0',
           token_symbol: chain.token_symbol || 'DOT',
           is_active: chain.is_active
         }))
       }
     });
   } catch (error) {
-    logger.error('Error in getTVL:', {
-      error: error.message,
-      stack: error.stack
-    });
+    console.error('❌ Error in getTVL:', error);
     
     res.status(500).json({
       status: 'error',
@@ -64,7 +58,7 @@ exports.getTVL = async (req, res) => {
 exports.getTVLHistory = async (req, res) => {
   try {
     const { days = 30, chainId } = req.query;
-    logger.info(`Fetching TVL history for last ${days} days${chainId ? `, chainId: ${chainId}` : ''}`);
+    console.log(`Fetching TVL history for last ${days} days${chainId ? `, chainId: ${chainId}` : ''}`);
 
     // Calculate date range
     const endDate = new Date();
@@ -73,7 +67,6 @@ exports.getTVLHistory = async (req, res) => {
 
     // Build where clause
     const where = {
-      metric_name: 'tvl',
       timestamp: {
         [Op.between]: [startDate, endDate]
       }
@@ -85,19 +78,20 @@ exports.getTVLHistory = async (req, res) => {
     }
 
     // Get TVL history
-    const tvlHistory = await Metric.findAll({
+    const tvlHistory = await TVL.findAll({
       where,
       order: [['timestamp', 'ASC']],
       attributes: [
-        'timestamp',
-        'value_float',
-        'value_int',
-        'parachain_id'
+        'id',
+        'parachain_id',
+        'total_value_locked',
+        'token_count',
+        'timestamp'
       ],
       include: [{
         model: Parachain,
         attributes: ['name', 'token_symbol'],
-        required: true
+        required: false
       }]
     });
 

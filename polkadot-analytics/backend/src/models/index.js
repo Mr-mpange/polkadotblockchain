@@ -1,5 +1,5 @@
-const { sequelize } = require('../config/mysql');
-const { DataTypes } = require('sequelize');
+const { Sequelize, DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 const fs = require('fs');
 const path = require('path');
 
@@ -16,13 +16,19 @@ const modelFiles = fs.readdirSync(__dirname)
 
 // Initialize each model
 modelFiles.forEach(file => {
-  const model = require(path.join(__dirname, file))(sequelize, DataTypes);
-  models[model.name] = model;
+  try {
+    const model = require(path.join(__dirname, file))(sequelize, DataTypes);
+    if (model) {
+      models[model.name] = model;
+    }
+  } catch (error) {
+    console.error(`Error loading model ${file}:`, error);
+  }
 });
 
 // Set up associations
 Object.keys(models).forEach(modelName => {
-  if (models[modelName].associate) {
+  if (models[modelName] && typeof models[modelName].associate === 'function') {
     models[modelName].associate(models);
   }
 });
@@ -31,5 +37,5 @@ Object.keys(models).forEach(modelName => {
 module.exports = {
   ...models,
   sequelize,
-  Sequelize: require('sequelize')
+  Sequelize
 };

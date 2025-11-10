@@ -11,7 +11,9 @@ module.exports = (sequelize, DataTypes) => {
     },
     blockHash: {
       type: DataTypes.STRING(66),
-      allowNull: false
+      allowNull: false,
+      charset: 'utf8mb4',
+      collate: 'utf8mb4_unicode_ci'
     },
     indexInBlock: {
       type: DataTypes.INTEGER,
@@ -53,6 +55,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.JSON,
       allowNull: true
     },
+    argsText: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      get() {
+        const args = this.getDataValue('args');
+        return args ? JSON.stringify(args) : null;
+      }
+    },
     hash: {
       type: DataTypes.STRING(66),
       allowNull: false
@@ -86,10 +96,7 @@ module.exports = (sequelize, DataTypes) => {
       { fields: ['section', 'method'] },
       { fields: ['hash'] },
       { fields: ['timestamp'] },
-      {
-        fields: [sequelize.literal("((args->'toString'())::text)")],
-        name: 'extrinsic_args_search_idx'
-      }
+      { fields: ['argsText'] }
     ]
   });
 
@@ -97,7 +104,8 @@ module.exports = (sequelize, DataTypes) => {
     Extrinsic.belongsTo(models.Block, {
       foreignKey: 'blockHash',
       targetKey: 'hash',
-      as: 'block'
+      as: 'block',
+      constraints: false // We're handling constraints manually in database.js
     });
     Extrinsic.hasMany(models.Event, {
       foreignKey: 'extrinsicIdx',
@@ -105,6 +113,14 @@ module.exports = (sequelize, DataTypes) => {
       as: 'events'
     });
   };
+
+  // Add beforeSave hook to update argsText when args changes
+  Extrinsic.beforeSave((extrinsic, options) => {
+    if (extrinsic.changed('args')) {
+      extrinsic.argsText = extrinsic.args ? JSON.stringify(extrinsic.args) : null;
+    }
+    return Promise.resolve();
+  });
 
   return Extrinsic;
 };

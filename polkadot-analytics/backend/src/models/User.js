@@ -1,322 +1,260 @@
-const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { DataTypes } = require('sequelize');
 
-const userSchema = new mongoose.Schema({
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-    trim: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
-  },
-  username: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-    minlength: 3,
-    maxlength: 50
-  },
-  password: {
-    type: String,
-    required: true,
-    minlength: 6
-  },
-  firstName: {
-    type: String,
-    trim: true,
-    maxlength: 50
-  },
-  lastName: {
-    type: String,
-    trim: true,
-    maxlength: 50
-  },
-  // Profile information
-  avatar: {
-    type: String,
-    trim: true
-  },
-  bio: {
-    type: String,
-    trim: true,
-    maxlength: 500
-  },
-  // Account settings
-  isEmailVerified: {
-    type: Boolean,
-    default: false
-  },
-  emailVerificationToken: String,
-  emailVerificationExpires: Date,
-  passwordResetToken: String,
-  passwordResetExpires: Date,
-  // Account status
-  isActive: {
-    type: Boolean,
-    default: true
-  },
-  lastLogin: Date,
-  loginAttempts: {
-    type: Number,
-    default: 0
-  },
-  lockUntil: Date,
-  // Role and permissions
-  role: {
-    type: String,
-    enum: ['user', 'admin', 'moderator'],
-    default: 'user'
-  },
-  permissions: [{
-    type: String,
-    enum: ['read', 'write', 'admin', 'alerts', 'analytics']
-  }],
-  // Preferences
-  preferences: {
-    timezone: {
-      type: String,
-      default: 'UTC'
+module.exports = (sequelize) => {
+  const User = sequelize.define('User', {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true
     },
-    notifications: {
-      email: {
-        type: Boolean,
-        default: true
-      },
-      push: {
-        type: Boolean,
-        default: true
-      },
-      alerts: {
-        type: Boolean,
-        default: true
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      validate: {
+        isEmail: true,
+        notEmpty: true
       }
     },
-    theme: {
-      type: String,
-      enum: ['light', 'dark', 'system'],
-      default: 'system'
+    username: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      validate: {
+        len: [3, 50],
+        notEmpty: true
+      }
     },
-    dashboard: {
-      defaultView: {
-        type: String,
-        enum: ['overview', 'parachains', 'tvl', 'activity'],
-        default: 'overview'
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true,
+        len: [8, 100]
+      }
+    },
+    isEmailVerified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      field: 'is_email_verified'
+    },
+    emailVerificationToken: {
+      type: DataTypes.STRING,
+      field: 'email_verification_token'
+    },
+    emailVerificationExpires: {
+      type: DataTypes.DATE,
+      field: 'email_verification_expires'
+    },
+    passwordResetToken: {
+      type: DataTypes.STRING,
+      field: 'password_reset_token'
+    },
+    passwordResetExpires: {
+      type: DataTypes.DATE,
+      field: 'password_reset_expires'
+    },
+    loginAttempts: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      field: 'login_attempts'
+    },
+    lockUntil: {
+      type: DataTypes.DATE,
+      field: 'lock_until'
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+      field: 'is_active'
+    },
+    lastLogin: {
+      type: DataTypes.DATE,
+      field: 'last_login'
+    },
+    apiKey: {
+      type: DataTypes.STRING,
+      field: 'api_key'
+    },
+    role: {
+      type: DataTypes.ENUM('user', 'admin'),
+      defaultValue: 'user'
+    },
+    watchlist: {
+      type: DataTypes.JSON,
+      defaultValue: []
+    },
+    preferences: {
+      type: DataTypes.JSON,
+      defaultValue: {}
+    }
+  }, {
+    tableName: 'users',
+    timestamps: true,
+    underscored: true,
+    hooks: {
+      beforeCreate: async (user) => {
+        if (user.password) {
+          const salt = await bcrypt.genSalt(10);
+          user.password = await bcrypt.hash(user.password, salt);
+        }
       },
-      refreshInterval: {
-        type: Number,
-        default: 30 // seconds
+      beforeUpdate: async (user) => {
+        if (user.changed('password')) {
+          const salt = await bcrypt.genSalt(10);
+          user.password = await bcrypt.hash(user.password, salt);
+        }
       }
     }
-  },
-  // Wallet connections
-  walletAddress: {
-    type: String,
-    trim: true,
-    index: true
-  },
-  walletType: {
-    type: String,
-    enum: ['polkadot', 'substrate', 'metamask']
-  },
-  // Watchlist (parachains user is interested in)
-  watchlist: [{
-    type: Number, // parachainId
-    ref: 'Parachain'
-  }],
-  // API access
-  apiKey: {
-    type: String,
-    unique: true,
-    sparse: true
-  },
-  apiKeyExpires: Date,
-  // Audit trail
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
-  updatedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }
-}, {
-  timestamps: true,
-  toJSON: {
-    virtuals: true,
-    transform: function(doc, ret) {
-      delete ret.password;
-      delete ret.emailVerificationToken;
-      delete ret.passwordResetToken;
-      return ret;
-    }
-  },
-  toObject: { virtuals: true }
-});
+  });
 
-// Indexes
-userSchema.index({ email: 1 });
-userSchema.index({ username: 1 });
-userSchema.index({ walletAddress: 1 });
-userSchema.index({ 'preferences.timezone': 1 });
-
-// Virtual for full name
-userSchema.virtual('fullName').get(function() {
-  return `${this.firstName || ''} ${this.lastName || ''}`.trim();
-});
-
-// Pre-save middleware to hash password
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-
-  try {
-    const salt = await bcrypt.genSalt(12);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Instance methods
-userSchema.methods.comparePassword = async function(candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.password);
-};
-
-userSchema.methods.generateAuthToken = function() {
-  const payload = {
-    userId: this._id,
-    email: this.email,
-    username: this.username,
-    role: this.role
+  // Instance methods
+  User.prototype.comparePassword = async function(candidatePassword) {
+    return bcrypt.compare(candidatePassword, this.password);
   };
 
-  return jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: '7d'
-  });
-};
+  User.prototype.generateAuthToken = function() {
+    return jwt.sign(
+      { id: this.id, email: this.email, role: this.role },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '7d' }
+    );
+  };
 
-userSchema.methods.generateEmailVerificationToken = function() {
-  this.emailVerificationToken = jwt.sign(
-    { userId: this._id, email: this.email },
-    process.env.JWT_SECRET,
-    { expiresIn: '24h' }
-  );
-  this.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
-  return this.emailVerificationToken;
-};
+  User.prototype.generateEmailVerificationToken = function() {
+    const token = jwt.sign(
+      { id: this.id },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '24h' }
+    );
+    this.emailVerificationToken = token;
+    this.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    return token;
+  };
 
-userSchema.methods.generatePasswordResetToken = function() {
-  this.passwordResetToken = jwt.sign(
-    { userId: this._id, email: this.email },
-    process.env.JWT_SECRET,
-    { expiresIn: '1h' }
-  );
-  this.passwordResetExpires = Date.now() + 60 * 60 * 1000; // 1 hour
-  return this.passwordResetToken;
-};
+  User.prototype.generatePasswordResetToken = function() {
+    const token = jwt.sign(
+      { id: this.id },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '1h' }
+    );
+    this.passwordResetToken = token;
+    this.passwordResetExpires = new Date(Date.now() + 3600000);
+    return token;
+  };
 
-userSchema.methods.generateApiKey = function() {
-  this.apiKey = jwt.sign(
-    { userId: this._id, email: this.email, type: 'api' },
-    process.env.JWT_SECRET,
-    { expiresIn: '365d' }
-  );
-  this.apiKeyExpires = Date.now() + 365 * 24 * 60 * 60 * 1000; // 1 year
-  return this.apiKey;
-};
+  User.prototype.generateApiKey = function() {
+    const apiKey = jwt.sign(
+      { id: this.id, email: this.email },
+      process.env.API_KEY_SECRET || 'your-api-key-secret',
+      { expiresIn: '365d' }
+    );
+    this.apiKey = apiKey;
+    return apiKey;
+  };
 
-userSchema.methods.isLocked = function() {
-  return !!(this.lockUntil && this.lockUntil > Date.now());
-};
+  User.prototype.isLocked = function() {
+    return this.lockUntil && this.lockUntil > new Date();
+  };
 
-userSchema.methods.incLoginAttempts = function() {
-  if (this.lockUntil && this.lockUntil < Date.now()) {
-    return this.updateOne({
-      $unset: { lockUntil: 1 },
-      $set: { loginAttempts: 1 }
+  User.prototype.incLoginAttempts = async function() {
+    const LOCK_TIME = 15 * 60 * 1000; // 15 minutes
+    const MAX_LOGIN_ATTEMPTS = 5;
+
+    if (this.lockUntil && this.lockUntil < new Date()) {
+      return await this.update({
+        loginAttempts: 1,
+        lockUntil: null
+      });
+    }
+
+    const updates = { loginAttempts: this.loginAttempts + 1 };
+
+    if (this.loginAttempts + 1 >= MAX_LOGIN_ATTEMPTS && !this.isLocked()) {
+      updates.lockUntil = new Date(Date.now() + LOCK_TIME);
+    }
+
+    return await this.update(updates);
+  };
+
+  User.prototype.resetLoginAttempts = async function() {
+    return await this.update({
+      loginAttempts: 0,
+      lockUntil: null
     });
-  }
+  };
 
-  const updates = { $inc: { loginAttempts: 1 } };
+  User.prototype.addToWatchlist = async function(parachainId) {
+    const watchlist = this.watchlist || [];
+    if (!watchlist.includes(parachainId)) {
+      watchlist.push(parachainId);
+      return await this.update({ watchlist });
+    }
+    return this;
+  };
 
-  if (this.loginAttempts + 1 >= 5 && !this.isLocked()) {
-    updates.$set = {
-      lockUntil: Date.now() + 2 * 60 * 60 * 1000 // 2 hours
-    };
-  }
+  User.prototype.removeFromWatchlist = async function(parachainId) {
+    const watchlist = (this.watchlist || []).filter(id => id !== parachainId);
+    return await this.update({ watchlist });
+  };
 
-  return this.updateOne(updates);
+  // Static methods
+  User.findByCredentials = async function(email, password) {
+    const user = await this.findOne({ where: { email } });
+    
+    if (!user) {
+      throw new Error('Invalid login credentials');
+    }
+
+    if (user.isLocked()) {
+      throw new Error('Account is temporarily locked. Please try again later.');
+    }
+
+    const isMatch = await user.comparePassword(password);
+    
+    if (!isMatch) {
+      await user.incLoginAttempts();
+      throw new Error('Invalid login credentials');
+    }
+
+    await user.resetLoginAttempts();
+    user.lastLogin = new Date();
+    await user.save();
+    
+    return user;
+  };
+
+  User.findByEmailVerificationToken = async function(token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+      return await this.findOne({
+        where: {
+          id: decoded.id,
+          emailVerificationToken: token,
+          emailVerificationExpires: { [sequelize.Op.gt]: new Date() }
+        }
+      });
+    } catch (error) {
+      return null;
+    }
+  };
+
+  User.findByPasswordResetToken = async function(token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+      return await this.findOne({
+        where: {
+          id: decoded.id,
+          passwordResetToken: token,
+          passwordResetExpires: { [sequelize.Op.gt]: new Date() }
+        }
+      });
+    } catch (error) {
+      return null;
+    }
+  };
+
+  return User;
 };
-
-userSchema.methods.resetLoginAttempts = function() {
-  return this.updateOne({
-    $unset: { loginAttempts: 1, lockUntil: 1 },
-    $set: { lastLogin: Date.now() }
-  });
-};
-
-userSchema.methods.addToWatchlist = function(parachainId) {
-  if (!this.watchlist.includes(parachainId)) {
-    this.watchlist.push(parachainId);
-  }
-  return this.save();
-};
-
-userSchema.methods.removeFromWatchlist = function(parachainId) {
-  this.watchlist = this.watchlist.filter(id => id !== parachainId);
-  return this.save();
-};
-
-// Static methods
-userSchema.statics.findByCredentials = async function(email, password) {
-  const user = await this.findOne({ email: email.toLowerCase() });
-
-  if (!user) {
-    throw new Error('Invalid email or password');
-  }
-
-  if (user.isLocked()) {
-    throw new Error('Account temporarily locked. Please try again later.');
-  }
-
-  const isPasswordValid = await user.comparePassword(password);
-
-  if (!isPasswordValid) {
-    await user.incLoginAttempts();
-    throw new Error('Invalid email or password');
-  }
-
-  await user.resetLoginAttempts();
-  return user;
-};
-
-userSchema.statics.findByEmailVerificationToken = function(token) {
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    return this.findOne({
-      _id: decoded.userId,
-      emailVerificationToken: token,
-      emailVerificationExpires: { $gt: Date.now() }
-    });
-  } catch (error) {
-    return null;
-  }
-};
-
-userSchema.statics.findByPasswordResetToken = function(token) {
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    return this.findOne({
-      _id: decoded.userId,
-      passwordResetToken: token,
-      passwordResetExpires: { $gt: Date.now() }
-    });
-  } catch (error) {
-    return null;
-  }
-};
-
-module.exports = mongoose.model('User', userSchema);

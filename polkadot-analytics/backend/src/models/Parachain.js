@@ -1,149 +1,131 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
 
-const parachainSchema = new mongoose.Schema({
-  parachainId: {
-    type: Number,
-    required: true,
-    unique: true,
-    index: true
-  },
-  name: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  symbol: {
-    type: String,
-    required: true,
-    uppercase: true,
-    trim: true
-  },
-  description: {
-    type: String,
-    trim: true
-  },
-  website: {
-    type: String,
-    trim: true
-  },
-  logoUrl: {
-    type: String,
-    trim: true
-  },
-  category: {
-    type: String,
-    enum: ['DeFi', 'NFT', 'Gaming', 'Infrastructure', 'Privacy', 'Identity', 'Other'],
-    default: 'Other'
-  },
-  status: {
-    type: String,
-    enum: ['Active', 'Inactive', 'Coming Soon', 'Retired'],
-    default: 'Active'
-  },
-  launchDate: {
-    type: Date
-  },
-  totalSupply: {
-    type: String,
-    default: '0'
-  },
-  decimals: {
-    type: Number,
-    default: 18
-  },
-  contractAddress: {
-    type: String,
-    trim: true
-  },
-  relayChain: {
-    type: String,
-    enum: ['Polkadot', 'Kusama'],
-    default: 'Polkadot'
-  },
-  crowdloanInfo: {
-    raised: String,
-    target: String,
-    endDate: Date,
-    contributors: Number
-  },
-  socialLinks: {
-    twitter: String,
-    telegram: String,
-    discord: String,
-    github: String,
-    medium: String
-  },
-  isVerified: {
-    type: Boolean,
-    default: false
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
-  }
-}, {
-  timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
-});
+module.exports = (sequelize) => {
+  const Parachain = sequelize.define('Parachain', {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true
+    },
+    parachainId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      unique: true,
+      field: 'parachain_id'
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
+    },
+    symbol: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true,
+        isUppercase: true
+      }
+    },
+    description: {
+      type: DataTypes.TEXT
+    },
+    website: {
+      type: DataTypes.STRING,
+      validate: {
+        isUrl: true
+      }
+    },
+    logoUrl: {
+      type: DataTypes.STRING,
+      field: 'logo_url',
+      validate: {
+        isUrl: true
+      }
+    },
+    category: {
+      type: DataTypes.ENUM('DeFi', 'NFT', 'Gaming', 'Infrastructure', 'Privacy', 'Identity', 'Other'),
+      defaultValue: 'Other'
+    },
+    status: {
+      type: DataTypes.ENUM('Active', 'Inactive', 'Coming Soon', 'Retired'),
+      defaultValue: 'Active'
+    },
+    launchDate: {
+      type: DataTypes.DATE,
+      field: 'launch_date'
+    },
+    totalSupply: {
+      type: DataTypes.STRING,
+      defaultValue: '0',
+      field: 'total_supply'
+    },
+    decimals: {
+      type: DataTypes.INTEGER,
+      defaultValue: 18
+    },
+    // Chain information
+    relayChain: {
+      type: DataTypes.STRING,
+      defaultValue: 'Polkadot',
+      field: 'relay_chain'
+    },
+    isParachain: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+      field: 'is_parachain'
+    },
+    // Social links
+    twitter: DataTypes.STRING,
+    telegram: DataTypes.STRING,
+    github: DataTypes.STRING,
+    discord: DataTypes.STRING,
+    // Additional metadata
+    metadata: {
+      type: DataTypes.JSON,
+      defaultValue: {}
+    }
+  }, {
+    tableName: 'parachains',
+    timestamps: true,
+    underscored: true,
+    indexes: [
+      { fields: ['parachain_id'], unique: true },
+      { fields: ['name'] },
+      { fields: ['status'] },
+      { fields: ['category'] },
+      { fields: ['relay_chain'] }
+    ]
+  });
 
-// Indexes for performance
-parachainSchema.index({ name: 1 });
-parachainSchema.index({ symbol: 1 });
-parachainSchema.index({ category: 1 });
-parachainSchema.index({ status: 1 });
-parachainSchema.index({ relayChain: 1 });
-
-// Virtual for TVL data
-parachainSchema.virtual('tvlData', {
-  ref: 'TVL',
-  localField: 'parachainId',
-  foreignField: 'parachainId',
-  justOne: false
-});
-
-// Virtual for activity data
-parachainSchema.virtual('activityData', {
-  ref: 'Activity',
-  localField: 'parachainId',
-  foreignField: 'parachainId',
-  justOne: false
-});
-
-// Pre-save middleware
-parachainSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
-});
-
-// Static method to find active parachains
-parachainSchema.statics.findActive = function() {
-  return this.find({ status: 'Active' });
-};
-
-// Static method to find by relay chain
-parachainSchema.statics.findByRelayChain = function(relayChain) {
-  return this.find({ relayChain, status: 'Active' });
-};
-
-// Instance method to get latest metrics
-parachainSchema.methods.getLatestMetrics = async function() {
-  const TVL = mongoose.model('TVL');
-  const Activity = mongoose.model('Activity');
-
-  const [latestTVL, latestActivity] = await Promise.all([
-    TVL.findOne({ parachainId: this.parachainId }).sort({ timestamp: -1 }),
-    Activity.findOne({ parachainId: this.parachainId }).sort({ timestamp: -1 })
-  ]);
-
-  return {
-    tvl: latestTVL,
-    activity: latestActivity
+  // Static methods
+  Parachain.findActive = async function() {
+    return this.findAll({
+      where: { status: 'Active' },
+      order: [['name', 'ASC']]
+    });
   };
-};
 
-module.exports = mongoose.model('Parachain', parachainSchema);
+  Parachain.findByRelayChain = async function(relayChain) {
+    return this.findAll({
+      where: { relayChain },
+      order: [['name', 'ASC']]
+    });
+  };
+
+  // Instance methods
+  Parachain.prototype.getLatestMetrics = async function() {
+    // This would typically join with a metrics table
+    // For now, return basic info
+    return {
+      id: this.id,
+      name: this.name,
+      symbol: this.symbol,
+      status: this.status,
+      updatedAt: this.updatedAt
+    };
+  };
+
+  return Parachain;
+};

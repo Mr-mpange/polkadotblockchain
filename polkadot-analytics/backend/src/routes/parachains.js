@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const logger = require('../utils/logger');
 
 // Mock data for parachains
 const mockParachains = [
@@ -70,16 +69,17 @@ const mockParachains = [
  */
 router.get('/', (req, res) => {
   try {
-    logger.info('GET /api/parachains');
+    console.log('GET /api/parachains');
     res.status(200).json({
       status: 'success',
       data: mockParachains
     });
   } catch (error) {
-    logger.error('Error in parachains route:', error);
+    console.error('Error in parachains route:', error);
     res.status(500).json({
       status: 'error',
-      message: 'Failed to fetch parachains'
+      message: 'Failed to fetch parachains',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });

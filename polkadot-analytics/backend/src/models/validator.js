@@ -3,7 +3,8 @@ module.exports = (sequelize, DataTypes) => {
     stashAddress: {
       type: DataTypes.STRING(48),
       primaryKey: true,
-      allowNull: false
+      allowNull: false,
+      field: 'stash_address'  // Explicitly set the column name in snake_case
     },
     controllerAddress: {
       type: DataTypes.STRING(48),
@@ -77,11 +78,24 @@ module.exports = (sequelize, DataTypes) => {
     ]
   });
 
-  Validator.associate = (models) => {
+  // Set table name explicitly to match the expected name in the foreign key constraint
+  Validator.tableName = 'validators';
+  
+  // Define associations
+  Validator.associate = function(models) {
+    // Accounts associated with this validator
     Validator.hasMany(models.Account, {
       foreignKey: 'stashAddress',
-      sourceKey: 'stashAddress',
-      as: 'nominators'
+      as: 'accounts'
+    });
+    
+    // Nominators for this validator
+    Validator.hasMany(models.Account, {
+      foreignKey: 'stashAddress',
+      as: 'nominators',
+      scope: {
+        isNominator: true
+      }
     });
   };
 

@@ -3,23 +3,26 @@ module.exports = (sequelize, DataTypes) => {
     address: {
       type: DataTypes.STRING(48),
       primaryKey: true,
-      allowNull: false
+      allowNull: false,
+      field: 'address'
     },
     nonce: {
       type: DataTypes.INTEGER,
-      defaultValue: 0
+      defaultValue: 0,
+      field: 'nonce'
     },
     freeBalance: {
       type: DataTypes.STRING,
-      defaultValue: '0'
+      defaultValue: '0',
+      field: 'free_balance'
     },
     reservedBalance: {
       type: DataTypes.STRING,
-      defaultValue: '0'
+      defaultValue: '0',
+      field: 'reserved_balance'
     },
     totalBalance: {
-      type: DataTypes.STRING,
-      defaultValue: '0',
+      type: DataTypes.VIRTUAL,
       get() {
         const free = BigInt(this.getDataValue('freeBalance') || '0');
         const reserved = BigInt(this.getDataValue('reservedBalance') || '0');
@@ -28,73 +31,82 @@ module.exports = (sequelize, DataTypes) => {
     },
     isValidator: {
       type: DataTypes.BOOLEAN,
-      defaultValue: false
+      defaultValue: false,
+      field: 'is_validator'
     },
     isNominator: {
       type: DataTypes.BOOLEAN,
-      defaultValue: false
+      defaultValue: false,
+      field: 'is_nominator'
     },
     stashAddress: {
       type: DataTypes.STRING(48),
       allowNull: true,
-      references: {
-        model: 'validators',  // This references the table name, not the model name
-        key: 'stashAddress'
-      },
-      onDelete: 'SET NULL'
+      field: 'stash_address'
     },
     identity: {
       type: DataTypes.JSON,
-      allowNull: true
+      allowNull: true,
+      field: 'identity'
     },
     activeEras: {
-      type: DataTypes.ARRAY(DataTypes.INTEGER),
-      defaultValue: []
+      type: DataTypes.JSON,
+      defaultValue: [],
+      field: 'active_eras',
+      get() {
+        const value = this.getDataValue('activeEras');
+        return value || [];
+      },
+      set(value) {
+        this.setDataValue('activeEras', Array.isArray(value) ? value : []);
+      }
     },
     lastActive: {
       type: DataTypes.DATE,
-      allowNull: true
+      allowNull: true,
+      field: 'last_active'
     },
     metadata: {
       type: DataTypes.JSON,
-      allowNull: true
+      allowNull: true,
+      field: 'metadata'
     },
     isContract: {
       type: DataTypes.BOOLEAN,
-      defaultValue: false
+      defaultValue: false,
+      field: 'is_contract'
     },
     contractCodeHash: {
       type: DataTypes.STRING(66),
-      allowNull: true
+      allowNull: true,
+      field: 'contract_code_hash'
     },
     contractDeployedAt: {
       type: DataTypes.DATE,
-      allowNull: true
+      allowNull: true,
+      field: 'contract_deployed_at'
     },
     contractTxCount: {
       type: DataTypes.INTEGER,
-      defaultValue: 0
+      defaultValue: 0,
+      field: 'contract_tx_count'
     }
   }, {
+    tableName: 'accounts',
     timestamps: true,
+    underscored: true,
     indexes: [
-      { fields: ['isValidator'] },
-      { fields: ['isNominator'] },
-      { fields: ['stashAddress'] },
-      { fields: ['totalBalance'] },
-      { fields: ['lastActive'] },
-      { 
-        fields: [
-          sequelize.literal("((metadata->>'display')::text)"),
-          sequelize.literal("((metadata->>'email')::text)"),
-          sequelize.literal("((metadata->>'twitter')::text)")
-        ],
-        name: 'account_metadata_search_idx'
-      }
+      { fields: ['stash_address'] },
+      { fields: ['is_validator'] },
+      { fields: ['is_nominator'] },
+      { fields: ['is_contract'] }
+      // Note: Removed JSON index as it's not supported in MariaDB
+      // If you need to search JSON fields, consider using a full-text search solution
+      // or storing the searchable fields in dedicated columns
     ]
   });
 
-  Account.associate = (models) => {
+  Account.associate = function(models) {
     Account.belongsTo(models.Validator, {
       foreignKey: 'stashAddress',
       targetKey: 'stashAddress',

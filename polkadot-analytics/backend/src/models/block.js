@@ -11,9 +11,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     hash: {
-      type: DataTypes.STRING(66),
+      type: DataTypes.STRING(66, 'utf8mb4'),
       unique: true,
-      allowNull: false
+      allowNull: false,
+      charset: 'utf8mb4',
+      collate: 'utf8mb4_unicode_ci'
     },
     parentHash: {
       type: DataTypes.STRING(66),
@@ -56,12 +58,16 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: false
     }
   }, {
+    tableName: 'blocks',
     timestamps: true,
+    charset: 'utf8mb4',
+    collate: 'utf8mb4_unicode_ci',
+    freezeTableName: true, // Prevent Sequelize from pluralizing table name
     indexes: [
       { fields: ['number'] },
-      { fields: ['hash'] },
-      { fields: ['timestamp'] },
-      { fields: ['validator'] }
+      { fields: ['parentHash'] },
+      { fields: ['validator'] },
+      { fields: ['timestamp'] }
     ]
   });
 
@@ -69,7 +75,10 @@ module.exports = (sequelize, DataTypes) => {
     Block.hasMany(models.Transaction, {
       foreignKey: 'blockHash',
       sourceKey: 'hash',
-      as: 'transactions'
+      as: 'transactions',
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
+      constraints: true
     });
   };
 

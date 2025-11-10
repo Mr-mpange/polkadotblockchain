@@ -1,235 +1,195 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
 
-const alertSchema = new mongoose.Schema({
-  type: {
-    type: String,
-    required: true,
-    enum: ['tvl_drop', 'tvl_spike', 'activity_drop', 'activity_spike', 'xcm_anomaly', 'new_parachain', 'parachain_issue'],
-    index: true
-  },
-  severity: {
-    type: String,
-    required: true,
-    enum: ['low', 'medium', 'high', 'critical'],
-    default: 'medium',
-    index: true
-  },
-  title: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  message: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  parachainId: {
-    type: Number,
-    index: true
-  },
-  parachainName: {
-    type: String
-  },
-  // Alert thresholds and values
-  threshold: {
-    type: Number
-  },
-  currentValue: {
-    type: Number
-  },
-  previousValue: {
-    type: Number
-  },
-  changePercentage: {
-    type: Number
-  },
-  // Alert metadata
-  source: {
-    type: String,
-    enum: ['system', 'manual', 'external'],
-    default: 'system'
-  },
-  isActive: {
-    type: Boolean,
-    default: true,
-    index: true
-  },
-  isAcknowledged: {
-    type: Boolean,
-    default: false,
-    index: true
-  },
-  acknowledgedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
-  acknowledgedAt: {
-    type: Date
-  },
-  // Notification settings
-  notifications: {
-    email: {
-      type: Boolean,
-      default: false
+module.exports = (sequelize) => {
+  const Alert = sequelize.define('Alert', {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true
     },
-    webhook: {
-      type: Boolean,
-      default: true
+    type: {
+      type: DataTypes.ENUM(
+        'tvl_drop', 'tvl_spike', 'activity_drop', 
+        'activity_spike', 'xcm_anomaly', 'new_parachain', 'parachain_issue'
+      ),
+      allowNull: false
     },
-    push: {
-      type: Boolean,
-      default: false
+    severity: {
+      type: DataTypes.ENUM('low', 'medium', 'high', 'critical'),
+      allowNull: false,
+      defaultValue: 'medium'
+    },
+    title: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
+    },
+    message: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
+    },
+    parachainId: {
+      type: DataTypes.INTEGER,
+      field: 'parachain_id'
+    },
+    parachainName: {
+      type: DataTypes.STRING,
+      field: 'parachain_name'
+    },
+    // Alert thresholds and values
+    threshold: {
+      type: DataTypes.FLOAT
+    },
+    currentValue: {
+      type: DataTypes.FLOAT,
+      field: 'current_value'
+    },
+    previousValue: {
+      type: DataTypes.FLOAT,
+      field: 'previous_value'
+    },
+    changePercentage: {
+      type: DataTypes.FLOAT,
+      field: 'change_percentage'
+    },
+    // Alert metadata
+    source: {
+      type: DataTypes.ENUM('system', 'manual', 'external'),
+      defaultValue: 'system'
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+      field: 'is_active'
+    },
+    isAcknowledged: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      field: 'is_acknowledged'
+    },
+    acknowledgedBy: {
+      type: DataTypes.INTEGER,
+      field: 'acknowledged_by'
+    },
+    acknowledgedAt: {
+      type: DataTypes.DATE,
+      field: 'acknowledged_at'
+    },
+    resolvedAt: {
+      type: DataTypes.DATE,
+      field: 'resolved_at'
+    },
+    resolvedBy: {
+      type: DataTypes.INTEGER,
+      field: 'resolved_by'
+    },
+    // Cooldown to prevent duplicate alerts
+    cooldownUntil: {
+      type: DataTypes.DATE,
+      field: 'cooldown_until'
+    },
+    // Additional metadata
+    metadata: {
+      type: DataTypes.JSON,
+      defaultValue: {}
     }
-  },
-  // Notification history
-  notificationHistory: [{
-    method: {
-      type: String,
-      enum: ['email', 'webhook', 'push']
-    },
-    status: {
-      type: String,
-      enum: ['sent', 'failed', 'pending'],
-      default: 'pending'
-    },
-    sentAt: {
-      type: Date,
-      default: Date.now
-    },
-    error: String
-  }],
-  // Alert conditions and triggers
-  conditions: {
-    type: Map,
-    of: mongoose.Schema.Types.Mixed
-  },
-  // Cooldown and frequency settings
-  cooldownUntil: {
-    type: Date,
-    index: true
-  },
-  maxFrequency: {
-    type: String,
-    enum: ['hourly', 'daily', 'weekly', 'none'],
-    default: 'hourly'
-  },
-  // Additional context
-  relatedAlerts: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Alert'
-  }],
-  tags: [{
-    type: String,
-    trim: true
-  }],
-  // Timestamps
-  firstSeen: {
-    type: Date,
-    default: Date.now,
-    index: true
-  },
-  lastSeen: {
-    type: Date,
-    default: Date.now,
-    index: true
-  },
-  resolvedAt: {
-    type: Date
-  },
-  resolvedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }
-}, {
-  timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
-});
-
-// Indexes for performance
-alertSchema.index({ type: 1, isActive: 1 });
-alertSchema.index({ severity: 1, isActive: 1 });
-alertSchema.index({ parachainId: 1, isActive: 1 });
-alertSchema.index({ firstSeen: -1 });
-alertSchema.index({ lastSeen: -1 });
-
-// Virtual for duration (how long alert has been active)
-alertSchema.virtual('duration').get(function() {
-  return this.resolvedAt ? this.resolvedAt - this.firstSeen : Date.now() - this.firstSeen;
-});
-
-// Virtual for status
-alertSchema.virtual('status').get(function() {
-  if (this.resolvedAt) return 'resolved';
-  if (!this.isActive) return 'inactive';
-  if (this.isAcknowledged) return 'acknowledged';
-  return 'active';
-});
-
-// Pre-save middleware
-alertSchema.pre('save', function(next) {
-  if (this.isModified()) {
-    this.lastSeen = Date.now();
-  }
-  next();
-});
-
-// Static methods
-alertSchema.statics.getActiveAlerts = function() {
-  return this.find({ isActive: true, resolvedAt: { $exists: false } })
-    .sort({ severity: 1, firstSeen: -1 });
-};
-
-alertSchema.statics.getAlertsByType = function(type) {
-  return this.find({ type, isActive: true })
-    .sort({ firstSeen: -1 });
-};
-
-alertSchema.statics.getAlertsByParachain = function(parachainId) {
-  return this.find({ parachainId, isActive: true })
-    .sort({ firstSeen: -1 });
-};
-
-alertSchema.statics.getRecentAlerts = function(hours = 24) {
-  const since = new Date(Date.now() - hours * 60 * 60 * 1000);
-  return this.find({ firstSeen: { $gte: since } })
-    .sort({ firstSeen: -1 });
-};
-
-// Instance methods
-alertSchema.methods.acknowledge = function(userId) {
-  this.isAcknowledged = true;
-  this.acknowledgedBy = userId;
-  this.acknowledgedAt = Date.now();
-  return this.save();
-};
-
-alertSchema.methods.resolve = function(userId) {
-  this.isActive = false;
-  this.resolvedAt = Date.now();
-  this.resolvedBy = userId;
-  return this.save();
-};
-
-alertSchema.methods.addNotificationAttempt = function(method, status, error = null) {
-  this.notificationHistory.push({
-    method,
-    status,
-    error,
-    sentAt: Date.now()
+  }, {
+    tableName: 'alerts',
+    timestamps: true,
+    underscored: true,
+    indexes: [
+      { fields: ['type'] },
+      { fields: ['severity'] },
+      { fields: ['parachain_id'] },
+      { fields: ['is_active'] },
+      { fields: ['is_acknowledged'] },
+      { fields: ['created_at'] }
+    ]
   });
-  return this.save();
-};
 
-alertSchema.methods.isInCooldown = function() {
-  if (!this.cooldownUntil) return false;
-  return Date.now() < this.cooldownUntil;
-};
+  // Static methods
+  Alert.getActiveAlerts = async function() {
+    return this.findAll({
+      where: { isActive: true },
+      order: [['createdAt', 'DESC']]
+    });
+  };
 
-alertSchema.methods.setCooldown = function(minutes = 60) {
-  this.cooldownUntil = new Date(Date.now() + minutes * 60 * 1000);
-  return this.save();
-};
+  Alert.getAlertsByType = async function(type) {
+    return this.findAll({
+      where: { type },
+      order: [['createdAt', 'DESC']]
+    });
+  };
 
-module.exports = mongoose.model('Alert', alertSchema);
+  Alert.getAlertsByParachain = async function(parachainId) {
+    return this.findAll({
+      where: { parachainId },
+      order: [['createdAt', 'DESC']]
+    });
+  };
+
+  Alert.getRecentAlerts = async function(hours = 24) {
+    const date = new Date();
+    date.setHours(date.getHours() - hours);
+    
+    return this.findAll({
+      where: {
+        createdAt: { [sequelize.Op.gte]: date }
+      },
+      order: [['createdAt', 'DESC']]
+    });
+  };
+
+  // Instance methods
+  Alert.prototype.acknowledge = async function(userId) {
+    this.isAcknowledged = true;
+    this.acknowledgedBy = userId;
+    this.acknowledgedAt = new Date();
+    return this.save();
+  };
+
+  Alert.prototype.resolve = async function(userId) {
+    this.isActive = false;
+    this.resolvedBy = userId;
+    this.resolvedAt = new Date();
+    return this.save();
+  };
+
+  Alert.prototype.addNotificationAttempt = async function(method, status, error = null) {
+    const notification = {
+      method,
+      status,
+      timestamp: new Date()
+    };
+    
+    if (error) {
+      notification.error = error.message || String(error);
+    }
+    
+    if (!this.metadata.notifications) {
+      this.metadata.notifications = [];
+    }
+    
+    this.metadata.notifications.push(notification);
+    return this.save();
+  };
+
+  Alert.prototype.isInCooldown = function() {
+    return this.cooldownUntil && this.cooldownUntil > new Date();
+  };
+
+  Alert.prototype.setCooldown = function(minutes = 60) {
+    const cooldownDate = new Date();
+    cooldownDate.setMinutes(cooldownDate.getMinutes() + minutes);
+    this.cooldownUntil = cooldownDate;
+    return this.save();
+  };
+
+  return Alert;
+};
