@@ -7,11 +7,11 @@ const connectDB = async () => {
   try {
     // Database configuration
     const dbConfig = {
-      database: process.env.DB_NAME || 'polkadot_analytics',
-      username: process.env.DB_USER || 'root',
-      password: process.env.DB_PASSWORD || '',
-      host: process.env.DB_HOST || 'localhost',
-      port: process.env.DB_PORT || 3306,
+      database: 'polkadot_analytics',
+      username: 'root',
+      password: '',
+      host: '127.0.0.1',
+      port: 3306,
       dialect: 'mysql',
       logging: process.env.NODE_ENV === 'development' ? console.log : false,
       pool: {

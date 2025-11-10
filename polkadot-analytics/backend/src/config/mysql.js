@@ -6,6 +6,15 @@ const path = require('path');
 const MAX_RETRIES = 5;
 const RETRY_DELAY = 5000; // 5 seconds
 
+// Log database connection details
+console.log('🔌 Database connection details:', {
+  host: process.env.MYSQL_HOST,
+  port: process.env.MYSQL_PORT,
+  database: process.env.MYSQL_DATABASE,
+  username: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD ? '***' : '(empty)'
+});
+
 const sequelize = new Sequelize(
   process.env.MYSQL_DATABASE || 'polkadot_analytics',
   process.env.MYSQL_USER || 'root',
@@ -14,7 +23,9 @@ const sequelize = new Sequelize(
     host: process.env.MYSQL_HOST || 'localhost',
     port: parseInt(process.env.MYSQL_PORT) || 3306,
     dialect: 'mysql',
-    logging: process.env.NODE_ENV === 'development' ? (msg) => logger.debug(msg) : false,
+    logging: (msg) => {
+      console.log(`[Sequelize] ${msg}`);
+    },
     define: {
       timestamps: true,
       underscored: true,
@@ -69,9 +80,12 @@ async function runMigrations() {
  * Attempts to establish a database connection with retry logic
  * @param {number} retryCount - Current retry attempt number
  */
-const connectDB = async function connectDB(retryCount = 0) {
+const connectDB = async (retryCount = 0) => {
+  console.log(`\n🔄 Attempting to connect to database (attempt ${retryCount + 1})...`);
   try {
+    console.log('🔍 Testing database connection...');
     await sequelize.authenticate();
+    console.log('✅ MySQL connection established successfully.');
     logger.info('✅ MySQL connection established successfully.');
     
     // Run migrations on startup
@@ -83,18 +97,36 @@ const connectDB = async function connectDB(retryCount = 0) {
       logger.info('✅ Database models synchronized');
     }
   } catch (error) {
-    if (retryCount < MAX_RETRIES) {
-      const nextRetry = retryCount + 1;
-      const delay = RETRY_DELAY * nextRetry;
-      logger.warn(`⚠️  MySQL connection attempt ${nextRetry}/${MAX_RETRIES} failed. Retrying in ${delay/1000} seconds...`);
-      
-      // Wait before retrying
-      await new Promise(resolve => setTimeout(resolve, delay));
-      return connectDB(nextRetry);
+    console.error('\n❌ DATABASE CONNECTION ERROR');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    
+    if (error.original) {
+      console.error('\nOriginal error details:');
+      console.error('Error code:', error.original.code);
+      console.error('Error number:', error.original.errno);
+      console.error('SQL State:', error.original.sqlState);
+      console.error('SQL Message:', error.original.sqlMessage);
+      console.error('SQL:', error.original.sql);
     }
     
-    logger.error('❌ Unable to connect to MySQL after multiple attempts:', error);
-    process.exit(1);
+    if (retryCount < MAX_RETRIES - 1) {
+      const delay = RETRY_DELAY / 1000;
+      console.log(`\n🔄 Retrying connection in ${delay} seconds (attempt ${retryCount + 2}/${MAX_RETRIES})...`);
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      return connectDB(retryCount + 1);
+    }
+    
+    console.error('\n❌ MAXIMUM NUMBER OF RETRIES REACHED');
+    console.error('Could not connect to the database after', MAX_RETRIES, 'attempts');
+    console.error('Please check the following:');
+    console.error('1. Is MySQL server running?');
+    console.error('2. Are the database credentials correct?');
+    console.error('3. Is the database created?');
+    console.error('4. Is the port correct?');
+    console.error('5. Is there a firewall blocking the connection?');
+    
+    throw error;
   }
 }
 

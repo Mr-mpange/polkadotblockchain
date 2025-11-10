@@ -339,13 +339,19 @@ class PolkadotAnalyticsApp {
 
   async start() {
     try {
-      // Connect to database
+      console.log('🔌 Connecting to database...');
       await connectDB();
-      logger.info('Database connected successfully');
+      console.log('✅ Database connected successfully');
 
-      // Initialize scheduler for data fetching
-      await initializeScheduler();
-      logger.info('Scheduler initialized successfully');
+      try {
+        // Try to initialize scheduler, but don't crash if it fails
+        console.log('⏳ Initializing scheduler...');
+        await initializeScheduler();
+        console.log('✅ Scheduler initialized successfully');
+      } catch (schedulerError) {
+        console.warn('⚠️  Could not initialize scheduler (this might be expected in development)');
+        console.warn(schedulerError.message);
+      }
 
       // Start server
       this.server = this.app.listen(this.port, () => {
