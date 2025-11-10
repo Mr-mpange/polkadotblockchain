@@ -21,12 +21,17 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: '0',
       field: 'reserved_balance'
     },
+    // Virtual field for total balance (calculated, not stored in DB)
     totalBalance: {
-      type: DataTypes.VIRTUAL,
+      type: DataTypes.VIRTUAL(DataTypes.STRING, ['freeBalance', 'reservedBalance']),
       get() {
         const free = BigInt(this.getDataValue('freeBalance') || '0');
         const reserved = BigInt(this.getDataValue('reservedBalance') || '0');
         return (free + reserved).toString();
+      },
+      set() {
+        // This is a virtual field, so we don't store it
+        throw new Error('Cannot set totalBalance directly');
       }
     },
     isValidator: {

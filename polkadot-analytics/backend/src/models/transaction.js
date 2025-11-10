@@ -6,10 +6,17 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     blockHash: {
-      type: DataTypes.STRING(66, 'utf8mb4'),
+      type: DataTypes.STRING(66),
       allowNull: false,
+      field: 'block_hash',
       charset: 'utf8mb4',
-      collate: 'utf8mb4_unicode_ci'
+      collate: 'utf8mb4_unicode_ci',
+      references: {
+        model: 'blocks',
+        key: 'hash'
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE'
     },
     blockNumber: {
       type: DataTypes.INTEGER,

@@ -235,8 +235,10 @@ const connectDB = async () => {
             
             // Default type mapping for other models/columns
             let sqlType = type.toUpperCase();
-            if (type.includes('varchar')) {
-              sqlType = `VARCHAR(${options.type.options.length || 255})`;
+            if (type === 'string' || type.includes('varchar')) {
+              // Convert STRING to VARCHAR with default length 255 if not specified
+              const length = options.type?.options?.length || 255;
+              sqlType = `VARCHAR(${length})`;
               if (options.charset) {
                 sqlType += ` CHARACTER SET ${options.charset}`;
               }
@@ -244,7 +246,18 @@ const connectDB = async () => {
                 sqlType += ` COLLATE ${options.collate}`;
               }
             } else if (type === 'text') {
-              sqlType = 'TEXT';
+              // Handle different TEXT types based on length
+              const length = options.type?.options?.length || 65535; // Default to TEXT
+              if (length <= 255) {
+                sqlType = 'TINYTEXT';
+              } else if (length <= 65535) {
+                sqlType = 'TEXT';
+              } else if (length <= 16777215) {
+                sqlType = 'MEDIUMTEXT';
+              } else {
+                sqlType = 'LONGTEXT';
+              }
+              
               if (options.charset) {
                 sqlType += ` CHARACTER SET ${options.charset}`;
               }
@@ -268,10 +281,15 @@ const connectDB = async () => {
             
             // Handle primary key
             if (options.primaryKey) {
-              columnDef += ' PRIMARY KEY';
+              // For MySQL/MariaDB, AUTO_INCREMENT should be specified after the data type
               if (options.autoIncrement) {
-                columnDef += ' AUTO_INCREMENT';
+                if (columnDef.includes('INT')) {
+                  // If it's an INT type, add AUTO_INCREMENT after the type
+                  columnDef = columnDef.replace(/(INT\s*)(?=PRIMARY|$)/, '$1AUTO_INCREMENT ');
+                }
               }
+              // Add PRIMARY KEY at the end
+              columnDef += ' PRIMARY KEY';
             } else {
               columnDef += options.allowNull === false ? ' NOT NULL' : ' NULL';
               
@@ -613,21 +631,100 @@ const connectDB = async () => {
       
       // Create all tables in order
       for (const modelName of syncOrder) {
-        await createTableWithIndexes(modelName);
+        const model = models[modelName];
+        const tableName = model.tableName || model.name;
+        
+        // Skip if model doesn't exist or is already created
+        if (!model || !model.getTableName) {
+          console.log(`ℹ️  Model ${modelName} not found or already created, skipping...`);
+          continue;
+        }
+        
+        console.log(`🔄 Creating ${tableName} table...`);
+        
+        try {
+          // Skip virtual fields during sync
+          const attributes = {};
+          for (const [attr, options] of Object.entries(model.rawAttributes)) {
+            if (options.type.key.toLowerCase() !== 'virtual') {
+              attributes[attr] = options;
+            }
+          }
+          
+          // Create a temporary model without virtual fields
+          const tempModel = model.sequelize.define(model.name, attributes, {
+            ...model.options,
+            tableName: model.tableName,
+            timestamps: model.options.timestamps,
+            paranoid: model.options.paranoid,
+            underscored: model.options.underscored,
+            freezeTableName: model.options.freezeTableName
+          });
+          
+          // Sync the temporary model
+          await tempModel.sync({ force: false, alter: true });
+          console.log(`✅ Created ${tableName} table`);
+        } catch (error) {
+          console.error(`❌ Error creating ${tableName} table:`, error.message);
+          if (error.sql) console.error('SQL:', error.sql);
+          throw error;
+        }
       }
 
       // Now add all foreign key constraints manually
       try {
         console.log('🔄 Adding foreign key constraints...');
         
-        // First, ensure the blocks.hash column has a unique index
+        // First, ensure the blocks.hash column has the correct character set and collation
         try {
           await sequelize.query(`
+            ALTER TABLE blocks 
+            MODIFY COLUMN hash VARCHAR(66) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL;
+            
             CREATE UNIQUE INDEX IF NOT EXISTS uq_blocks_hash ON blocks(hash);
           `);
-          console.log('✅ Created index on blocks.hash');
+          console.log('✅ Updated blocks.hash with correct character set and collation');
         } catch (error) {
-          console.error('❌ Error creating index on blocks.hash:', error.message);
+          console.error('❌ Error updating blocks.hash:', error.message);
+        }
+        
+        // Update transactions.block_hash to match the exact character set and collation of blocks.hash
+        try {
+          // First, drop any existing foreign key constraints
+          await sequelize.query(`
+            SET FOREIGN_KEY_CHECKS = 0;
+            
+            -- Drop existing foreign key if it exists
+            SET @dbname = DATABASE();
+            SET @tablename = 'transactions';
+            SET @constraintname = (SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS 
+                                 WHERE TABLE_SCHEMA = @dbname 
+                                 AND TABLE_NAME = @tablename 
+                                 AND CONSTRAINT_TYPE = 'FOREIGN_KEY');
+            
+            SET @s = CONCAT('ALTER TABLE ', @tablename, ' DROP FOREIGN KEY ', @constraintname, ';');
+            
+            PREPARE stmt FROM @s;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+            
+            -- Update the column definition
+            ALTER TABLE transactions 
+            MODIFY COLUMN block_hash VARCHAR(66) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL;
+            
+            -- Add the foreign key constraint
+            ALTER TABLE transactions 
+            ADD CONSTRAINT fk_transactions_block_hash 
+            FOREIGN KEY (block_hash) REFERENCES blocks(hash)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE;
+            
+            SET FOREIGN_KEY_CHECKS = 1;
+          `);
+          console.log('✅ Added foreign key constraint from transactions.block_hash to blocks.hash');
+        } catch (error) {
+          console.error('❌ Error adding foreign key constraint:', error.message);
+          if (error.sql) console.error('SQL:', error.sql);
         }
           
         // Helper function to add foreign key with better error handling
