@@ -7,23 +7,23 @@ const rateLimit = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 
-const { connectDB } = require('./src/config/database');
-const { errorHandler } = require('./src/middleware/errorHandler');
-const { notFound } = require('./src/middleware/notFound');
+const { connectDB } = require('./config/database');
+const { errorHandler } = require('./middleware/errorHandler');
+const { notFound } = require('./middleware/notFound');
 
 // Import routes
 const healthRoutes = require('./routes/health');
-const testRoutes = require('./src/routes/test-routes');
-const authRoutes = require('./src/routes/auth');
-const parachainRoutes = require('./src/routes/parachains');
-const tvlRoutes = require('./src/routes/tvl');
-const activityRoutes = require('./src/routes/activity');
-const historyRoutes = require('./src/routes/history');
-const alertRoutes = require('./src/routes/alerts');
-const dashboardRoutes = require('./src/routes/dashboard');
+const testRoutes = require('./routes/test-routes');
+const authRoutes = require('./routes/auth');
+const parachainRoutes = require('./routes/parachains');
+const tvlRoutes = require('./routes/tvl');
+const activityRoutes = require('./routes/activity');
+const historyRoutes = require('./routes/history');
+const alertRoutes = require('./routes/alerts');
+const dashboardRoutes = require('./routes/dashboard');
 
-const { logger } = require('./src/utils/logger');
-const { initializeScheduler } = require('./src/services/scheduler');
+const { logger } = require('./utils/logger');
+const { initializeScheduler } = require('./services/scheduler');
 
 class PolkadotAnalyticsApp {
   constructor() {
@@ -80,12 +80,15 @@ class PolkadotAnalyticsApp {
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          connectSrc: ["'self'", 'http://localhost:3001', 'ws://localhost:3001'],
-          scriptSrc: ["'self'"],
-          styleSrc: ["'self'"],
-          imgSrc: ["'self'"],
-          fontSrc: ["'self'"],
+          connectSrc: ["'self'", 'http://localhost:3001', 'ws://localhost:3001', 'http://localhost:3000'],
+          scriptSrc: ["'self'", "'unsafe-inline'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", 'data:', 'blob:'],
+          fontSrc: ["'self'", 'data:'],
           objectSrc: ["'none'"],
+          frameSrc: ["'self'"],
+          workerSrc: ["'self'"],
+          formAction: ["'self'"],
           upgradeInsecureRequests: []
         },
       },
@@ -115,8 +118,8 @@ class PolkadotAnalyticsApp {
 
     // Compression
     this.app.use(compression());
+  };
 
-    // Health check endpoint
   setupHealthCheck() {
     console.log('Setting up health check routes...');
     
@@ -166,16 +169,36 @@ class PolkadotAnalyticsApp {
     console.log('Mounting health routes at /');
     this.app.use('/', healthRoutes);
 
-    // Mount test routes
-    console.log('Mounting test routes at /api/test');
-    this.app.use('/api/test', testRoutes);
+    // Mount test routes if they exist
+    if (testRoutes) {
+      console.log('Mounting test routes at /api/test');
+      this.app.use('/api/test', testRoutes);
+    }
 
-    // Mount the dashboard router directly
-    console.log('Mounting dashboard routes at /api/dashboard');
-    this.app.use('/api/dashboard', (req, res, next) => {
-      console.log('Dashboard middleware hit for path:', req.path);
-      next();
-    }, dashboardRoutes);
+    // Mount the dashboard router if it exists
+    if (dashboardRoutes) {
+      console.log('Mounting dashboard routes at /api/dashboard');
+      this.app.use('/api/dashboard', (req, res, next) => {
+        console.log(`Dashboard route hit: ${req.method} ${req.originalUrl}`);
+        next();
+      }, dashboardRoutes);
+    }
+    
+    // Add a test route to verify routing
+    this.app.get('/api/test-route', (req, res) => {
+      console.log('Test route hit');
+      res.json({ 
+        status: 'success',
+        message: 'Test route is working!', 
+        timestamp: new Date().toISOString(),
+        routes: [
+          '/api/dashboard',
+          '/api/dashboard/health',
+          '/api/dashboard/test',
+          '/api/test-route'
+        ]
+      });
+    });
     
     // Log all registered routes (for debugging)
     const routes = [];
@@ -369,11 +392,5 @@ class PolkadotAnalyticsApp {
   }
 }
 
-// Create and start the application
-const app = new PolkadotAnalyticsApp();
-app.start().catch((error) => {
-  console.error('Failed to start application:', error);
-  process.exit(1);
-});
-
-module.exports = app;
+// Export the PolkadotAnalyticsApp class
+module.exports = PolkadotAnalyticsApp;

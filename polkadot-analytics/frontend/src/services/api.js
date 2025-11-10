@@ -39,7 +39,16 @@ class ApiService {
 
     // Add response interceptor
     this.client.interceptors.response.use(
-      (response) => response,
+      (response) => {
+        console.log('API Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: response.config?.url,
+          method: response.config?.method,
+          data: response.data
+        });
+        return response;
+      },
       (error) => {
         // Handle common errors
         if (error.response) {
@@ -50,7 +59,8 @@ class ApiService {
             statusText: error.response.statusText,
             url: error.config?.url,
             method: error.config?.method,
-            data: error.response.data
+            data: error.response.data,
+            headers: error.response.headers
           });
           
           // Handle specific status codes
@@ -58,23 +68,48 @@ class ApiService {
             // Handle unauthorized
             // window.location.href = '/login';
           } else if (error.response.status === 404) {
-            // Handle not found
+            console.error('Endpoint not found. Please check the API route.');
           } else if (error.response.status >= 500) {
-            // Handle server errors
+            console.error('Server error. Please try again later.');
           }
         } else if (error.request) {
           // The request was made but no response was received
           console.error('API Request Error:', {
-            message: 'No response received',
+            message: 'No response received from server',
             url: error.config?.url,
-            method: error.config?.method
+            method: error.config?.method,
+            baseURL: error.config?.baseURL,
+            timeout: error.config?.timeout,
+            code: error.code,
+            message: error.message
           });
+          
+          // Provide more specific error message based on error code
+          if (error.code === 'ECONNABORTED') {
+            console.error('Request timeout. The server took too long to respond.');
+          } else if (error.code === 'ERR_NETWORK') {
+            console.error('Network error. Please check your internet connection.');
+          } else if (error.code === 'ERR_BAD_REQUEST') {
+            console.error('Bad request. Please check your request parameters.');
+          }
         } else {
           // Something happened in setting up the request that triggered an Error
-          console.error('API Setup Error:', error.message);
+          console.error('API Setup Error:', {
+            message: error.message,
+            stack: error.stack,
+            config: error.config
+          });
         }
         
-        return Promise.reject(error);
+        // Return a more user-friendly error message
+        return Promise.reject({
+          message: error.response?.data?.message || 
+                  error.message || 
+                  'An unexpected error occurred',
+          status: error.response?.status,
+          code: error.code,
+          originalError: process.env.NODE_ENV === 'development' ? error : undefined
+        });
       }
     );
   }
