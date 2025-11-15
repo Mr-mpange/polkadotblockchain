@@ -89,12 +89,33 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  TVL.associate = function(models) {
-    TVL.belongsTo(models.Parachain, {
-      foreignKey: 'parachainId',
-      as: 'parachain'
-    });
-  };
+  // Add a flag to track if associations have been set up
+  if (!TVL.associationsSetUp) {
+    TVL.associate = function(models) {
+      console.log('🔗 Setting up associations for TVL...');
+      
+      // Clear any existing associations
+      if (TVL.associations) {
+        Object.keys(TVL.associations).forEach(assoc => {
+          delete TVL.associations[assoc];
+        });
+      }
+      
+      try {
+        TVL.belongsTo(models.Parachain, {
+          foreignKey: 'parachainId',
+          as: 'parachain'
+        });
+        
+        // Mark associations as set up
+        TVL.associationsSetUp = true;
+        console.log('✅ Successfully set up associations for TVL');
+      } catch (error) {
+        console.error('❌ Error in TVL.associate:', error);
+        throw error;
+      }
+    };
+  }
 
   return TVL;
 };

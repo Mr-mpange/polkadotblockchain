@@ -21,6 +21,7 @@ const activityRoutes = require('./routes/activity');
 const historyRoutes = require('./routes/history');
 const alertRoutes = require('./routes/alerts');
 const dashboardRoutes = require('./routes/dashboard');
+const subscanRoutes = require('./routes/subscan');
 
 const { logger } = require('./utils/logger');
 const { initializeScheduler } = require('./services/scheduler');
@@ -55,21 +56,24 @@ class PolkadotAnalyticsApp {
 
   setupMiddleware() {
     // Enable CORS for all routes
-    const allowedOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
+    const allowedOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:3001'];
     
-    // Apply CORS middleware with specific options
+    // Apply CORS middleware with specific options - MUST be before other middleware
     this.app.use((req, res, next) => {
       const origin = req.headers.origin;
-      if (allowedOrigins.includes(origin)) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cache-Control');
+      
+      // Always set CORS headers for allowed origins
+      if (allowedOrigins.includes(origin) || !origin) {
+        res.setHeader('Access-Control-Allow-Origin', origin || 'http://localhost:3000');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cache-Control, X-Requested-With');
         res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
       }
       
-      // Handle preflight requests
+      // Handle preflight requests immediately
       if (req.method === 'OPTIONS') {
-        return res.status(200).end();
+        return res.status(204).end();
       }
       
       next();
@@ -183,6 +187,15 @@ class PolkadotAnalyticsApp {
         next();
       }, dashboardRoutes);
     }
+
+    // Mount API routes
+    console.log('Mounting API routes...');
+    this.app.use('/api/parachains', parachainRoutes);
+    this.app.use('/api/tvl', tvlRoutes);
+    this.app.use('/api/activity', activityRoutes);
+    this.app.use('/api/history', historyRoutes);
+    this.app.use('/api/alerts', alertRoutes);
+    this.app.use('/api/subscan', subscanRoutes);
     
     // Add a test route to verify routing
     this.app.get('/api/test-route', (req, res) => {
@@ -386,9 +399,11 @@ class PolkadotAnalyticsApp {
     }
 
     // Close database connections
-    const mongoose = require('mongoose');
-    await mongoose.connection.close();
-    logger.info('Database connections closed');
+    const { sequelize } = require('./config/database');
+    if (sequelize) {
+      await sequelize.close();
+      logger.info('Database connections closed');
+    }
 
     // Shutdown timeout
     setTimeout(() => {

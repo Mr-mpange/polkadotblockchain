@@ -1,5 +1,15 @@
-const { Parachain, TVL, sequelize } = require('../models');
+const { getInitializedModels } = require('../models');
 const { Op, literal } = require('sequelize');
+
+// Get models - they will be initialized after database connection
+const getModels = () => {
+  const models = getInitializedModels();
+  return {
+    Parachain: models.Parachain,
+    TVL: models.TVL,
+    sequelize: models.sequelize
+  };
+};
 
 // @desc    Get total value locked across all parachains
 // @route   GET /api/tvl
@@ -7,6 +17,16 @@ const { Op, literal } = require('sequelize');
 exports.getTVL = async (req, res) => {
   try {
     console.log('🔍 Fetching TVL data...');
+    
+    const { TVL, Parachain, sequelize } = getModels();
+    
+    if (!TVL) {
+      console.error('❌ TVL model not initialized');
+      return res.status(500).json({
+        status: 'error',
+        message: 'TVL model not available'
+      });
+    }
     
     // Get the latest TVL data for each parachain
     const latestTVLs = await TVL.findAll({
@@ -57,6 +77,16 @@ exports.getTVL = async (req, res) => {
 // @access  Public
 exports.getTVLHistory = async (req, res) => {
   try {
+    const { TVL, Parachain } = getModels();
+    
+    if (!TVL) {
+      console.error('❌ TVL model not initialized');
+      return res.status(500).json({
+        status: 'error',
+        message: 'TVL model not available'
+      });
+    }
+    
     const { days = 30, chainId } = req.query;
     console.log(`Fetching TVL history for last ${days} days${chainId ? `, chainId: ${chainId}` : ''}`);
 

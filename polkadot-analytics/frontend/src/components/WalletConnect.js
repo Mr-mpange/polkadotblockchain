@@ -42,11 +42,21 @@ const WalletConnect = ({ className = '' }) => {
 
   const fetchBalance = async (address) => {
     try {
-      // This would typically call your backend API to get balance
-      // For now, we'll simulate it
-      setBalance('1,234.56 DOT');
+      // Fetch balance from backend API (which uses Subscan)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/subscan/balance/${address}`);
+      const data = await response.json();
+      
+      if (data.status === 'success' && data.data?.data) {
+        const balanceData = data.data.data;
+        // Convert from planck to DOT (1 DOT = 10^10 planck)
+        const dotBalance = (parseInt(balanceData.balance || 0) / 10000000000).toFixed(4);
+        setBalance(`${dotBalance} DOT`);
+      } else {
+        setBalance('0.0000 DOT');
+      }
     } catch (error) {
       console.error('Error fetching balance:', error);
+      setBalance('Unable to fetch');
     }
   };
 

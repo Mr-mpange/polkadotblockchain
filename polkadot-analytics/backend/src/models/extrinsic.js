@@ -112,23 +112,44 @@ module.exports = (sequelize, DataTypes) => {
     ]
   });
 
-  Extrinsic.associate = (models) => {
-    Extrinsic.belongsTo(models.Block, {
-      foreignKey: 'blockHash',
-      targetKey: 'hash',
-      as: 'block',
-      onDelete: 'CASCADE',
-      onUpdate: 'CASCADE'
-    });
-    
-    Extrinsic.hasMany(models.Event, {
-      foreignKey: 'extrinsicIdx',
-      sourceKey: 'indexInBlock',
-      as: 'events',
-      onDelete: 'CASCADE',
-      onUpdate: 'CASCADE'
-    });
-  };
+  // Add a flag to track if associations have been set up
+  if (!Extrinsic.associationsSetUp) {
+    Extrinsic.associate = (models) => {
+      console.log('🔗 Setting up associations for Extrinsic...');
+      
+      // Clear any existing associations
+      if (Extrinsic.associations) {
+        Object.keys(Extrinsic.associations).forEach(assoc => {
+          delete Extrinsic.associations[assoc];
+        });
+      }
+      
+      try {
+        Extrinsic.belongsTo(models.Block, {
+          foreignKey: 'blockHash',
+          targetKey: 'hash',
+          as: 'block',
+          onDelete: 'CASCADE',
+          onUpdate: 'CASCADE'
+        });
+        
+        Extrinsic.hasMany(models.Event, {
+          foreignKey: 'extrinsicIdx',
+          sourceKey: 'indexInBlock',
+          as: 'events',
+          onDelete: 'CASCADE',
+          onUpdate: 'CASCADE'
+        });
+        
+        // Mark associations as set up
+        Extrinsic.associationsSetUp = true;
+        console.log('✅ Successfully set up associations for Extrinsic');
+      } catch (error) {
+        console.error('❌ Error in Extrinsic.associate:', error);
+        throw error;
+      }
+    };
+  }
 
   // Add beforeSave hook to update argsText when args changes
   Extrinsic.beforeSave((extrinsic, options) => {

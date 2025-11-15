@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet & Subscan API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        button {
+            background: #e6007a;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #c20066;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .data-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔗 Polkadot Wallet & Subscan API Test</h1>
+    
+    <!-- Wallet Connection Test -->
+    <div class="container">
+        <h2>1. Wallet Connection Test</h2>
+        <div id="wallet-status" class="status info">
+            Not connected
+        </div>
+        <button id="connect-wallet" onclick="connectWallet()">Connect Wallet</button>
+        <button id="disconnect-wallet" onclick="disconnectWallet()" disabled>Disconnect</button>
+        <div id="wallet-info" class="data-display" style="display:none;"></div>
+    </div>
+
+    <!-- Backend API Test -->
+    <div class="container">
+        <h2>2. Backend API Test</h2>
+        <div class="test-section">
+            <h3>Test Parachains API</h3>
+            <button onclick="testParachainsAPI()">Test GET /api/parachains</button>
+            <div id="parachains-result" class="data-display" style="display:none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test Dashboard API</h3>
+            <button onclick="testDashboardAPI()">Test GET /api/dashboard</button>
+            <div id="dashboard-result" class="data-display" style="display:none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test TVL API</h3>
+            <button onclick="testTVLAPI()">Test GET /api/tvl</button>
+            <div id="tvl-result" class="data-display" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- Subscan API Test -->
+    <div class="container">
+        <h2>3. Subscan API Test</h2>
+        <div class="test-section">
+            <h3>Test Metadata</h3>
+            <button onclick="testSubscanMetadata()">Test GET /api/subscan/metadata</button>
+            <div id="subscan-metadata-result" class="data-display" style="display:none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test Account Balance</h3>
+            <input type="text" id="test-address" placeholder="Enter Polkadot address" style="width: 400px; padding: 8px;">
+            <button onclick="testSubscanBalance()">Test Balance</button>
+            <div id="subscan-balance-result" class="data-display" style="display:none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test Account Transactions</h3>
+            <button onclick="testSubscanTransactions()">Test Transactions</button>
+            <div id="subscan-transactions-result" class="data-display" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001/api';
+        let connectedAccount = null;
+
+        // Wallet Connection Functions
+        async function connectWallet() {
+            const statusEl = document.getElementById('wallet-status');
+            const infoEl = document.getElementById('wallet-info');
+            const connectBtn = document.getElementById('connect-wallet');
+            const disconnectBtn = document.getElementById('disconnect-wallet');
+
+            try {
+                statusEl.className = 'status info';
+                statusEl.textContent = 'Connecting...';
+                connectBtn.disabled = true;
+
+                // Check if Polkadot.js extension is available
+                if (!window.injectedWeb3 || !window.injectedWeb3['polkadot-js']) {
+                    throw new Error('Polkadot.js extension not found. Please install it from https://polkadot.js.org/extension/');
+                }
+
+                const extension = window.injectedWeb3['polkadot-js'];
+                const accounts = await extension.enable('Polkadot Analytics Test');
+
+                if (!accounts || accounts.length === 0) {
+                    throw new Error('No accounts found. Please create an account in Polkadot.js extension.');
+                }
+
+                connectedAccount = accounts[0];
+                
+                statusEl.className = 'status success';
+                statusEl.textContent = `✅ Connected: ${connectedAccount.meta.name || 'Account'}`;
+                
+                infoEl.style.display = 'block';
+                infoEl.textContent = JSON.stringify({
+                    name: connectedAccount.meta.name,
+                    address: connectedAccount.address,
+                    source: connectedAccount.meta.source
+                }, null, 2);
+
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+
+                // Fetch balance from Subscan
+                await fetchBalance(connectedAccount.address);
+
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.textContent = `❌ Error: ${error.message}`;
+                connectBtn.disabled = false;
+            }
+        }
+
+        async function fetchBalance(address) {
+            try {
+                const response = await fetch(`${API_BASE}/subscan/balance/${address}`);
+                const data = await response.json();
+                
+                const infoEl = document.getElementById('wallet-info');
+                const currentInfo = JSON.parse(infoEl.textContent);
+                currentInfo.balance = data;
+                infoEl.textContent = JSON.stringify(currentInfo, null, 2);
+            } catch (error) {
+                console.error('Error fetching balance:', error);
+            }
+        }
+
+        function disconnectWallet() {
+            connectedAccount = null;
+            const statusEl = document.getElementById('wallet-status');
+            const infoEl = document.getElementById('wallet-info');
+            const connectBtn = document.getElementById('connect-wallet');
+            const disconnectBtn = document.getElementById('disconnect-wallet');
+
+            statusEl.className = 'status info';
+            statusEl.textContent = 'Not connected';
+            infoEl.style.display = 'none';
+            connectBtn.disabled = false;
+            disconnectBtn.disabled = true;
+        }
+
+        // Backend API Test Functions
+        async function testParachainsAPI() {
+            const resultEl = document.getElementById('parachains-result');
+            resultEl.style.display = 'block';
+            resultEl.textContent = 'Loading...';
+
+            try {
+                const response = await fetch(`${API_BASE}/parachains`);
+                const data = await response.json();
+                resultEl.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testDashboardAPI() {
+            const resultEl = document.getElementById('dashboard-result');
+            resultEl.style.display = 'block';
+            resultEl.textContent = 'Loading...';
+
+            try {
+                const response = await fetch(`${API_BASE}/dashboard`);
+                const data = await response.json();
+                resultEl.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testTVLAPI() {
+            const resultEl = document.getElementById('tvl-result');
+            resultEl.style.display = 'block';
+            resultEl.textContent = 'Loading...';
+
+            try {
+                const response = await fetch(`${API_BASE}/tvl`);
+                const data = await response.json();
+                resultEl.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        // Subscan API Test Functions
+        async function testSubscanMetadata() {
+            const resultEl = document.getElementById('subscan-metadata-result');
+            resultEl.style.display = 'block';
+            resultEl.textContent = 'Loading...';
+
+            try {
+                const response = await fetch(`${API_BASE}/subscan/metadata`);
+                const data = await response.json();
+                resultEl.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testSubscanBalance() {
+            const address = document.getElementById('test-address').value || 
+                          (connectedAccount ? connectedAccount.address : '');
+            
+            if (!address) {
+                alert('Please enter an address or connect your wallet');
+                return;
+            }
+
+            const resultEl = document.getElementById('subscan-balance-result');
+            resultEl.style.display = 'block';
+            resultEl.textContent = 'Loading...';
+
+            try {
+                const response = await fetch(`${API_BASE}/subscan/balance/${address}`);
+                const data = await response.json();
+                resultEl.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testSubscanTransactions() {
+            const address = document.getElementById('test-address').value || 
+                          (connectedAccount ? connectedAccount.address : '');
+            
+            if (!address) {
+                alert('Please enter an address or connect your wallet');
+                return;
+            }
+
+            const resultEl = document.getElementById('subscan-transactions-result');
+            resultEl.style.display = 'block';
+            resultEl.textContent = 'Loading...';
+
+            try {
+                const response = await fetch(`${API_BASE}/subscan/transactions/${address}?page=0&row=5`);
+                const data = await response.json();
+                resultEl.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        // Auto-check wallet on load
+        window.addEventListener('load', () => {
+            if (window.injectedWeb3 && window.injectedWeb3['polkadot-js']) {
+                document.getElementById('wallet-status').textContent = '✅ Polkadot.js extension detected';
+            } else {
+                document.getElementById('wallet-status').textContent = '⚠️ Polkadot.js extension not detected';
+            }
+        });
+    </script>
+</body>
+</html>

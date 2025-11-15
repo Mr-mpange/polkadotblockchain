@@ -111,23 +111,44 @@ module.exports = (sequelize, DataTypes) => {
     indexes: []
   });
 
-  Account.associate = function(models) {
-    // Association with Validator (for accounts that are validators)
-    Account.belongsTo(models.Validator, {
-      foreignKey: 'stashAddress',
-      targetKey: 'stashAddress',
-      as: 'validatorInfo',
-      constraints: false
-    });
-    
-    // Association for nominators to their validator
-    Account.belongsTo(models.Validator, {
-      foreignKey: 'validatorStash',
-      targetKey: 'stashAddress',
-      as: 'nominatedValidator',
-      constraints: false
-    });
-  };
+  // Add a flag to track if associations have been set up
+  if (!Account.associationsSetUp) {
+    Account.associate = function(models) {
+      console.log('🔗 Setting up associations for Account...');
+      
+      // Clear any existing associations
+      if (Account.associations) {
+        Object.keys(Account.associations).forEach(assoc => {
+          delete Account.associations[assoc];
+        });
+      }
+      
+      try {
+        // Association with Validator (for accounts that are validators)
+        Account.belongsTo(models.Validator, {
+          foreignKey: 'stashAddress',
+          targetKey: 'stashAddress',
+          as: 'validatorInfo',
+          constraints: false
+        });
+        
+        // Association for nominators to their validator
+        Account.belongsTo(models.Validator, {
+          foreignKey: 'validatorStash',
+          targetKey: 'stashAddress',
+          as: 'nominatedValidator',
+          constraints: false
+        });
+        
+        // Mark associations as set up
+        Account.associationsSetUp = true;
+        console.log('✅ Successfully set up associations for Account');
+      } catch (error) {
+        console.error('❌ Error in Account.associate:', error);
+        throw error;
+      }
+    };
+  }
 
   return Account;
 };

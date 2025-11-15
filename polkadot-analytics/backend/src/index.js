@@ -22,6 +22,7 @@ const cors = require('cors');
 const dashboardRoutes = require('./routes/dashboard');
 const parachainsRoutes = require('./routes/parachains');
 const tvlRoutes = require('./routes/tvl');
+const subscanRoutes = require('./routes/subscan');
 
 async function startServer() {
   try {
@@ -86,6 +87,12 @@ async function startServer() {
       console.log('TVL router hit:', req.originalUrl);
       next();
     }, tvlRoutes);
+    
+    // Mount Subscan routes under /api/subscan
+    app.use('/api/subscan', (req, res, next) => {
+      console.log('Subscan router hit:', req.originalUrl);
+      next();
+    }, subscanRoutes);
     
     // Test route after mounting
     app.get('/api/test-after', (req, res) => {

@@ -81,27 +81,47 @@ module.exports = (sequelize, DataTypes) => {
   // Set table name explicitly to match the expected name in the foreign key constraint
   Validator.tableName = 'validators';
   
-  // Define associations
-  Validator.associate = function(models) {
-    // Validator's own account
-    Validator.belongsTo(models.Account, {
-      foreignKey: 'stashAddress',
-      targetKey: 'stashAddress',
-      as: 'account',
-      constraints: false
-    });
-    
-    // Nominators for this validator
-    Validator.hasMany(models.Account, {
-      foreignKey: 'validatorStash',
-      sourceKey: 'stashAddress',
-      as: 'validatorNominators',
-      scope: {
-        isNominator: true
-      },
-      constraints: false // We're handling constraints manually
-    });
-  };
+  // Add a flag to track if associations have been set up
+  if (!Validator.associationsSetUp) {
+    Validator.associate = function(models) {
+      console.log('🔗 Setting up associations for Validator...');
+      
+      // Clear any existing associations
+      if (Validator.associations) {
+        Object.keys(Validator.associations).forEach(assoc => {
+          delete Validator.associations[assoc];
+        });
+      }
+      
+      try {
+        // Validator's own account
+        Validator.belongsTo(models.Account, {
+          foreignKey: 'stashAddress',
+          targetKey: 'stashAddress',
+          as: 'account',
+          constraints: false
+        });
+        
+        // Nominators for this validator
+        Validator.hasMany(models.Account, {
+          foreignKey: 'validatorStash',
+          sourceKey: 'stashAddress',
+          as: 'validatorNominators',
+          scope: {
+            isNominator: true
+          },
+          constraints: false // We're handling constraints manually
+        });
+        
+        // Mark associations as set up
+        Validator.associationsSetUp = true;
+        console.log('✅ Successfully set up associations for Validator');
+      } catch (error) {
+        console.error('❌ Error in Validator.associate:', error);
+        throw error;
+      }
+    };
+  }
 
   return Validator;
 };

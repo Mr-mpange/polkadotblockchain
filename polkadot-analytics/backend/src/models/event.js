@@ -73,24 +73,44 @@ module.exports = (sequelize, DataTypes) => {
     ]
   });
 
-  // Define associations
-  Event.associate = (models) => {
-    Event.belongsTo(models.Extrinsic, {
-      foreignKey: 'extrinsicIdx',
-      targetKey: 'indexInBlock',
-      as: 'extrinsic',
-      onDelete: 'CASCADE',
-      onUpdate: 'CASCADE'
-    });
-    
-    Event.belongsTo(models.Block, {
-      foreignKey: 'blockHash',
-      targetKey: 'hash',
-      as: 'block',
-      onDelete: 'CASCADE',
-      onUpdate: 'CASCADE'
-    });
-  };
+  // Add a flag to track if associations have been set up
+  if (!Event.associationsSetUp) {
+    Event.associate = (models) => {
+      console.log('🔗 Setting up associations for Event...');
+      
+      // Clear any existing associations
+      if (Event.associations) {
+        Object.keys(Event.associations).forEach(assoc => {
+          delete Event.associations[assoc];
+        });
+      }
+      
+      try {
+        Event.belongsTo(models.Extrinsic, {
+          foreignKey: 'extrinsicIdx',
+          targetKey: 'indexInBlock',
+          as: 'extrinsic',
+          onDelete: 'CASCADE',
+          onUpdate: 'CASCADE'
+        });
+        
+        Event.belongsTo(models.Block, {
+          foreignKey: 'blockHash',
+          targetKey: 'hash',
+          as: 'block',
+          onDelete: 'CASCADE',
+          onUpdate: 'CASCADE'
+        });
+        
+        // Mark associations as set up
+        Event.associationsSetUp = true;
+        console.log('✅ Successfully set up associations for Event');
+      } catch (error) {
+        console.error('❌ Error in Event.associate:', error);
+        throw error;
+      }
+    };
+  }
 
   // Add beforeSave hook to update data0 and data1 when data changes
   Event.beforeSave((event, options) => {
