@@ -28,10 +28,30 @@ try {
   process.exit(1);
 }
 
+// Import activity routes
+let activityRoutes;
+try {
+  activityRoutes = require('./src/routes/activity');
+  console.log('✅ Activity routes module loaded successfully');
+} catch (error) {
+  console.error('❌ Failed to load activity routes:', error);
+  process.exit(1);
+}
+
+// Import TVL routes
+let tvlRoutes;
+try {
+  tvlRoutes = require('./src/routes/tvl');
+  console.log('✅ TVL routes module loaded successfully');
+} catch (error) {
+  console.error('❌ Failed to load TVL routes:', error);
+  process.exit(1);
+}
+
 console.log('=== Route modules loaded ===\n');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 5000;
 
 // Enhanced CORS configuration
 const corsOptions = {
@@ -149,6 +169,32 @@ try {
   console.log('✅ Parachains routes mounted successfully');
 } catch (error) {
   console.error('❌ Failed to mount parachains routes:', error);
+  process.exit(1);
+}
+
+// Mount activity routes with enhanced logging
+console.log('\n🔧 Mounting activity routes at /api/activity');
+try {
+  app.use('/api/activity', (req, res, next) => {
+    console.log(`[${new Date().toISOString()}] 📡 Activity request: ${req.method} ${req.originalUrl}`);
+    next();
+  }, activityRoutes);
+  console.log('✅ Activity routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount activity routes:', error);
+  process.exit(1);
+}
+
+// Mount TVL routes with enhanced logging
+console.log('\n🔧 Mounting TVL routes at /api/tvl');
+try {
+  app.use('/api/tvl', (req, res, next) => {
+    console.log(`[${new Date().toISOString()}] 📡 TVL request: ${req.method} ${req.originalUrl}`);
+    next();
+  }, tvlRoutes);
+  console.log('✅ TVL routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount TVL routes:', error);
   process.exit(1);
 }
 

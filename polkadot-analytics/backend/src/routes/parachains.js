@@ -116,7 +116,7 @@ router.get('/', (req, res) => {
 router.get('/:id', (req, res) => {
   try {
     const { id } = req.params;
-    logger.info(`GET /api/parachains/${id}`);
+    console.log(`GET /api/parachains/${id}`);
     
     const parachain = mockParachains.find(p => p.id === id);
     
@@ -132,7 +132,7 @@ router.get('/:id', (req, res) => {
       data: parachain
     });
   } catch (error) {
-    logger.error(`Error fetching parachain ${req.params.id}:`, error);
+    console.error(`Error fetching parachain ${req.params.id}:`, error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch parachain'
