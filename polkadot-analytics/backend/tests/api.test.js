@@ -5,23 +5,42 @@
 
 const request = require('supertest');
 const express = require('express');
-const mongoose = require('mongoose');
+const { Sequelize } = require('sequelize');
 
 // Import the main app
 const app = require('../src/app');
 
 // Test suite
 describe('Polkadot Analytics API', () => {
+  let sequelize;
+
   beforeAll(async () => {
-    // Connect to test database
-    if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/polkadot_analytics_test');
+    // Connect to test database (MySQL)
+    sequelize = new Sequelize(
+      process.env.MYSQL_DATABASE || 'polkadot_analytics_test',
+      process.env.MYSQL_USER || 'root',
+      process.env.MYSQL_PASSWORD || '',
+      {
+        host: process.env.MYSQL_HOST || '127.0.0.1',
+        port: parseInt(process.env.MYSQL_PORT) || 3306,
+        dialect: 'mysql',
+        logging: false
+      }
+    );
+    
+    try {
+      await sequelize.authenticate();
+      console.log('Test database connected');
+    } catch (error) {
+      console.error('Unable to connect to test database:', error);
     }
   });
 
   afterAll(async () => {
     // Clean up test database
-    await mongoose.connection.close();
+    if (sequelize) {
+      await sequelize.close();
+    }
   });
 
   describe('GET /parachains', () => {

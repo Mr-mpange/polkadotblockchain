@@ -36,8 +36,16 @@ except ImportError as e:
 
 # Database setup
 DATABASE_URL = os.getenv("DATABASE_URI", "mysql://user:password@localhost:3306/polkadot_analytics")
+
+# Use pymysql as the MySQL driver (it's pure Python and easier to install)
+if DATABASE_URL.startswith("mysql://"):
+    DATABASE_URL = DATABASE_URL.replace("mysql://", "mysql+pymysql://", 1)
+
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Use the new SQLAlchemy 2.0 import
+from sqlalchemy.orm import declarative_base
 Base = declarative_base()
 
 # Dependency to get DB session
@@ -86,10 +94,13 @@ async def lifespan(app: FastAPI):
         # Initialize ML models
         forecaster = TimeSeriesForecaster()
         anomaly_detector = AnomalyDetector()
-        insights_generator = InsightsGenerator(data_loader, forecaster, anomaly_detector)
         
-        # Initialize health checker
-        health_checker = HealthChecker(data_loader)
+        # Initialize insights generator (only takes gemini_api_key)
+        gemini_api_key = os.getenv("GEMINI_API_KEY")
+        insights_generator = InsightsGenerator(gemini_api_key=gemini_api_key)
+        
+        # Initialize health checker (no arguments needed)
+        health_checker = HealthChecker()
         
         logging.info("All services initialized successfully with MySQL database")
     except Exception as e:

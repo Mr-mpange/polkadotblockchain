@@ -1,9 +1,24 @@
+<<<<<<< HEAD
 // Mock TVL data
 const mockTVLData = [
   { id: '2000', name: 'Acala', total_stake: '500000000', token_symbol: 'ACA', is_active: true },
   { id: '2001', name: 'Moonbeam', total_stake: '750000000', token_symbol: 'GLMR', is_active: true },
   { id: '2004', name: 'Astar', total_stake: '250000000', token_symbol: 'ASTR', is_active: true }
 ];
+=======
+const { getInitializedModels } = require('../models');
+const { Op, literal } = require('sequelize');
+>>>>>>> 6ded7b1787120e48d8939e76daee962e2c980569
+
+// Get models - they will be initialized after database connection
+const getModels = () => {
+  const models = getInitializedModels();
+  return {
+    Parachain: models.Parachain,
+    TVL: models.TVL,
+    sequelize: models.sequelize
+  };
+};
 
 // @desc    Get total value locked across all parachains
 // @route   GET /api/tvl
@@ -12,6 +27,32 @@ exports.getTVL = async (req, res) => {
   try {
     console.log('🔍 Fetching TVL data...');
     
+<<<<<<< HEAD
+=======
+    const { TVL, Parachain, sequelize } = getModels();
+    
+    if (!TVL) {
+      console.error('❌ TVL model not initialized');
+      return res.status(500).json({
+        status: 'error',
+        message: 'TVL model not available'
+      });
+    }
+    
+    // Get the latest TVL data for each parachain
+    const latestTVLs = await TVL.findAll({
+      attributes: [
+        'parachainId',
+        [sequelize.fn('MAX', sequelize.col('total_value_locked')), 'total_stake'],
+        [sequelize.literal('(SELECT name FROM parachains WHERE parachains.id = TVL.parachain_id)'), 'name'],
+        [sequelize.literal('(SELECT token_symbol FROM parachains WHERE parachains.id = TVL.parachain_id)'), 'token_symbol'],
+        [sequelize.literal('true'), 'is_active']
+      ],
+      group: ['parachainId'],
+      raw: true
+    });
+
+>>>>>>> 6ded7b1787120e48d8939e76daee962e2c980569
     // Calculate total TVL across all parachains
     const totalTVL = mockTVLData.reduce((sum, chain) => {
       return sum + BigInt(chain.total_stake || '0');
@@ -42,6 +83,16 @@ exports.getTVL = async (req, res) => {
 // @access  Public
 exports.getTVLHistory = async (req, res) => {
   try {
+    const { TVL, Parachain } = getModels();
+    
+    if (!TVL) {
+      console.error('❌ TVL model not initialized');
+      return res.status(500).json({
+        status: 'error',
+        message: 'TVL model not available'
+      });
+    }
+    
     const { days = 30, chainId } = req.query;
     console.log(`Fetching TVL history for last ${days} days${chainId ? `, chainId: ${chainId}` : ''}`);
 

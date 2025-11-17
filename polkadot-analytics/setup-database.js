@@ -1,13 +1,18 @@
 /**
  * Database Setup and Connection Verification Script
- * This script verifies all database connections and initializes collections
+ * This script verifies MySQL database connections and initializes tables
+ * NOTE: This project uses MySQL, not MongoDB
  */
 
-const mongoose = require('mongoose');
-const { MongoClient } = require('mongodb');
+const mysql = require('mysql2/promise');
+const { Sequelize } = require('sequelize');
 
 // Configuration
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/polkadot_analytics';
+const MYSQL_URI = process.env.MYSQL_DATABASE || 'polkadot_analytics';
+const MYSQL_HOST = process.env.MYSQL_HOST || '127.0.0.1';
+const MYSQL_PORT = process.env.MYSQL_PORT || 3306;
+const MYSQL_USER = process.env.MYSQL_USER || 'root';
+const MYSQL_PASSWORD = process.env.MYSQL_PASSWORD || '';
 const DB_NAME = 'polkadot_analytics';
 
 // Color codes for terminal output

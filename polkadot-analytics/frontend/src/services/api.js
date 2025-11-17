@@ -612,6 +612,111 @@ class ApiService {
       return { status: 'error', error: error.message };
     }
   }
+
+  // Subscan API endpoints
+  async getAccountInfo(address) {
+    try {
+      const response = await this.client.get(`/subscan/account/${address}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching account info for ${address}:`, error);
+      throw error;
+    }
+  }
+
+  async getAccountBalance(address) {
+    try {
+      const response = await this.client.get(`/subscan/balance/${address}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching balance for ${address}:`, error);
+      throw error;
+    }
+  }
+
+  async getAccountTransactions(address, page = 0, row = 20) {
+    try {
+      const response = await this.client.get(`/subscan/transactions/${address}`, {
+        params: { page, row }
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching transactions for ${address}:`, error);
+      throw error;
+    }
+  }
+
+  async getBlockInfo(blockNumber) {
+    try {
+      const response = await this.client.get(`/subscan/block/${blockNumber}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching block ${blockNumber}:`, error);
+      throw error;
+    }
+  }
+
+  async getExtrinsicInfo(hash) {
+    try {
+      const response = await this.client.get(`/subscan/extrinsic/${hash}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching extrinsic ${hash}:`, error);
+      throw error;
+    }
+  }
+
+  async getSubscanMetadata() {
+    try {
+      const response = await this.client.get('/subscan/metadata');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching Subscan metadata:', error);
+      throw error;
+    }
+  }
+
+  async getDailyStats(start, end) {
+    try {
+      const response = await this.client.get('/subscan/daily-stats', {
+        params: { start, end }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching daily stats:', error);
+      throw error;
+    }
+  }
+
+  async getParachainInfoFromSubscan(parachainId) {
+    try {
+      const response = await this.client.get(`/subscan/parachain/${parachainId}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching parachain ${parachainId} from Subscan:`, error);
+      throw error;
+    }
+  }
+
+  async getValidatorsFromSubscan() {
+    try {
+      const response = await this.client.get('/subscan/validators');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching validators from Subscan:', error);
+      throw error;
+    }
+  }
+
+  async getStakingInfo(address) {
+    try {
+      const response = await this.client.get(`/subscan/staking/${address}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching staking info for ${address}:`, error);
+      throw error;
+    }
+  }
 }
 
 export const api = new ApiService();

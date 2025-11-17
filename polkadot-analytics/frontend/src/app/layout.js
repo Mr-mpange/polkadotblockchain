@@ -1,8 +1,12 @@
-import { Inter } from 'next/font/google';
 import './globals.css';
+import { Inter } from 'next/font/google';
 import { Providers } from './providers';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+});
 
 export const metadata = {
   title: 'Polkadot Analytics Platform',
@@ -35,7 +39,7 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
-      <body className={`${inter.className} min-h-screen flex flex-col`}>
+      <body className={`${inter.variable} font-sans min-h-screen flex flex-col`}>
         <Providers>{children}</Providers>
       </body>
     </html>

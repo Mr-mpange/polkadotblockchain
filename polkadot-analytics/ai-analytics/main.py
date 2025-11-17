@@ -44,8 +44,8 @@ class Settings(BaseSettings):
     gemini_api_key: Optional[str] = None
     huggingface_api_key: Optional[str] = None
 
-    # Database Configuration
-    mongodb_uri: str = "mongodb://localhost:27017"
+    # Database Configuration (MySQL)
+    database_uri: str = "mysql://root:@127.0.0.1:3306/polkadot_analytics"
     database_name: str = "polkadot_analytics"
 
     # Logging
@@ -79,7 +79,7 @@ async def lifespan(app: FastAPI):
     # Initialize core services
     try:
         data_loader = DataLoader(
-            mongodb_uri=settings.mongodb_uri,
+            db_url=settings.database_uri,
             database_name=settings.database_name
         )
 

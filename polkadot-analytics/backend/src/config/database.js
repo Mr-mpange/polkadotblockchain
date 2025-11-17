@@ -117,8 +117,9 @@ const connectDB = async () => {
     models = initializeModels(sequelize);
     console.log('✅ Models initialized successfully');
     
-    // In development, drop and recreate all tables
-    if (process.env.NODE_ENV !== 'production') {
+    // SKIP DATABASE RESET - Tables already exist and are working
+    // Commenting out to avoid tablespace corruption issues
+    if (false && process.env.NODE_ENV !== 'production') {
       console.log('🔄 Resetting database in development mode...');
       
       // Disable foreign key checks
@@ -674,35 +675,71 @@ const connectDB = async () => {
       
       // Second pass: Add foreign key constraints after all tables exist
       console.log('🔄 Adding foreign key constraints...');
-      for (const modelName of syncOrder) {
-        const model = models[modelName];
-        if (!model || !model.associations) continue;
-        
-        // Add foreign key constraints for each association
-        for (const [assocName, association] of Object.entries(model.associations)) {
-          try {
-            const foreignKey = association.foreignKey;
-            const target = association.target;
-            const targetKey = association.targetKey || 'id';
-            
-            if (foreignKey && target) {
-              const tableName = model.getTableName();
-              const targetTableName = typeof target.getTableName === 'function' ? target.getTableName() : target;
-              const constraintName = `fk_${tableName}_${foreignKey}`;
-              
-              await sequelize.query(`
-                ALTER TABLE ${tableName}
-                ADD CONSTRAINT ${constraintName}
-                FOREIGN KEY (${foreignKey}) REFERENCES ${targetTableName}(${targetKey})
-                ON DELETE CASCADE ON UPDATE CASCADE;
-              `);
-              
-              console.log(`✅ Added foreign key from ${tableName}.${foreignKey} to ${targetTableName}.${targetKey}`);
-            }
-          } catch (error) {
-            console.error(`❌ Error adding foreign key for ${modelName}.${assocName}:`, error.message);
-            if (error.sql) console.error('SQL:', error.sql);
-            // Continue with other constraints even if one fails
+      
+      // Define foreign keys manually with correct column names
+      const foreignKeys = [
+        {
+          table: 'extrinsics',
+          column: 'blockHash',
+          refTable: 'blocks',
+          refColumn: 'hash',
+          name: 'fk_extrinsics_blockHash'
+        },
+        {
+          table: 'events',
+          column: 'blockHash',
+          refTable: 'blocks',
+          refColumn: 'hash',
+          name: 'fk_events_blockHash'
+        },
+        {
+          table: 'events',
+          column: 'extrinsicIdx',
+          refTable: 'extrinsics',
+          refColumn: 'indexInBlock',
+          name: 'fk_events_extrinsicIdx'
+        },
+        {
+          table: 'transactions',
+          column: 'block_hash',
+          refTable: 'blocks',
+          refColumn: 'hash',
+          name: 'fk_transactions_block_hash'
+        }
+      ];
+      
+      for (const fk of foreignKeys) {
+        try {
+          // Check if foreign key already exists
+          const [existing] = await sequelize.query(`
+            SELECT CONSTRAINT_NAME
+            FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = '${fk.table}'
+              AND COLUMN_NAME = '${fk.column}'
+              AND REFERENCED_TABLE_NAME = '${fk.refTable}'
+          `);
+          
+          if (existing.length > 0) {
+            console.log(`  ℹ️  Foreign key ${fk.table}.${fk.column} → ${fk.refTable}.${fk.refColumn} already exists`);
+            continue;
+          }
+          
+          // Add the foreign key
+          await sequelize.query(`
+            ALTER TABLE \`${fk.table}\`
+            ADD CONSTRAINT \`${fk.name}\`
+            FOREIGN KEY (\`${fk.column}\`) REFERENCES \`${fk.refTable}\`(\`${fk.refColumn}\`)
+            ON DELETE CASCADE ON UPDATE CASCADE
+          `);
+          
+          console.log(`  ✅ Added foreign key ${fk.table}.${fk.column} → ${fk.refTable}.${fk.refColumn}`);
+        } catch (error) {
+          // Only log if it's not a "already exists" error
+          if (!error.message.includes('already exists') && !error.message.includes('Duplicate')) {
+            console.error(`  ⚠️  Could not add foreign key ${fk.table}.${fk.column}:`, error.message);
+          } else {
+            console.log(`  ℹ️  Foreign key ${fk.table}.${fk.column} already exists`);
           }
         }
       }
@@ -818,5 +855,7 @@ const connectDB = async () => {
     Sequelize,
     connectDB,
     closeDatabase,
-    setupDatabaseEvents
+    setupDatabaseEvents,
+    // Export models getter
+    getModels: () => models
   };

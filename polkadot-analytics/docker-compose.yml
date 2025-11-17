@@ -1,20 +1,22 @@
 version: '3.8'
 
 services:
-  # MongoDB Database
-  mongodb:
-    image: mongo:7.0
-    container_name: polkadot-analytics-mongo
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: polkadot-analytics-mysql
     restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
-      MONGO_INITDB_DATABASE: polkadot_analytics
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: polkadot_analytics
+      MYSQL_USER: polkadot
+      MYSQL_PASSWORD: password
     ports:
-      - "27017:27017"
+      - "3306:3306"
     volumes:
-      - mongodb_data:/data/db
+      - mysql_data:/var/lib/mysql
       - ./sample-data:/docker-entrypoint-initdb.d
+    command: --default-authentication-plugin=mysql_native_password
     networks:
       - polkadot-analytics-network
 
@@ -26,14 +28,18 @@ services:
     container_name: polkadot-analytics-backend
     restart: unless-stopped
     ports:
-      - "5000:5000"
+      - "3001:3001"
     environment:
       NODE_ENV: production
-      PORT: 5000
-      MONGODB_URI: mongodb://admin:password@mongodb:27017/polkadot_analytics
+      PORT: 3001
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: polkadot
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: polkadot_analytics
       POLKADOT_RPC_URL: wss://rpc.polkadot.io
     depends_on:
-      - mongodb
+      - mysql
     volumes:
       - ./backend:/app
       - /app/node_modules
@@ -50,11 +56,12 @@ services:
     ports:
       - "8000:8000"
     environment:
-      MONGODB_URI: mongodb://admin:password@mongodb:27017/polkadot_analytics
+      DATABASE_URI: mysql://polkadot:password@mysql:3306/polkadot_analytics
+      DATABASE_NAME: polkadot_analytics
       API_HOST: 0.0.0.0
       API_PORT: 8000
     depends_on:
-      - mongodb
+      - mysql
     volumes:
       - ./ai-analytics:/app
       - ai_models:/app/models
@@ -97,7 +104,7 @@ services:
       - polkadot-analytics-network
 
 volumes:
-  mongodb_data:
+  mysql_data:
   redis_data:
   ai_models:
   ai_logs:

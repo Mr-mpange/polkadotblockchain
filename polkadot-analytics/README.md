@@ -144,8 +144,12 @@ Copy `config/.env.example` to `.env` and configure:
 POLKADOT_RPC_URL=wss://rpc.polkadot.io
 SUBSCAN_API_KEY=your_subscan_api_key
 
-# Database
-MONGODB_URI=mongodb://localhost:27017/polkadot_analytics
+# MySQL Database
+MYSQL_HOST=127.0.0.1
+MYSQL_PORT=3306
+MYSQL_USER=root
+MYSQL_PASSWORD=
+MYSQL_DATABASE=polkadot_analytics
 
 # AI Analytics (optional)
 GEMINI_API_KEY=your_gemini_api_key

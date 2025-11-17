@@ -38,9 +38,14 @@ class DataLoader:
 
         try:
             if self.db_session is None:
+                # Ensure we're using pymysql driver
+                db_url = self.db_url
+                if db_url.startswith('mysql://'):
+                    db_url = db_url.replace('mysql://', 'mysql+pymysql://', 1)
+                
                 # Create sync engine
                 self._engine = create_engine(
-                    self.db_url,
+                    db_url,
                     poolclass=QueuePool,
                     pool_size=5,
                     max_overflow=10,
@@ -48,9 +53,10 @@ class DataLoader:
                     pool_recycle=3600
                 )
                 
-                # Create async engine
+                # Create async engine (use aiomysql for async)
+                async_url = db_url.replace('mysql+pymysql://', 'mysql+aiomysql://')
                 self._async_engine = create_async_engine(
-                    self.db_url.replace('mysql://', 'mysql+aiomysql://'),
+                    async_url,
                     poolclass=QueuePool,
                     pool_size=5,
                     max_overflow=10,

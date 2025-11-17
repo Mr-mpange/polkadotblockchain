@@ -14,7 +14,12 @@ const modelLoadOrder = [
   'block',      // Base model with no dependencies
   'account',    // Depends on block
   'validator',  // Depends on account
-  'parachain',  // Depends on block
+  'User',       // User model
+  'Parachain',  // Parachain model (note: capital P)
+  'parachain',  // Depends on block (if this is different from Parachain)
+  'TVL',        // TVL model (note: capital TVL)
+  'Activity',   // Activity model
+  'Alert',      // Alert model
   'extrinsic',  // Depends on block
   'transaction',// Depends on block and extrinsic
   'event'       // Depends on block and extrinsic
@@ -89,6 +94,9 @@ const initializeModels = (sequelizeInstance) => {
 module.exports = {
   models,
   initializeModels,
-  getInitializedModels: () => models,
+  getInitializedModels: () => {
+    // Include sequelize instance in the returned models
+    return { ...models, sequelize };
+  },
   getSequelize: () => sequelize
 };

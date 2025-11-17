@@ -1,9 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Empty turbopack config to silence Next.js 16 warning
+  turbopack: {},
   images: {
-    domains: ['localhost'],
+    // Remove deprecated 'domains' in favor of 'remotePatterns'
     remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
       {
         protocol: 'https',
         hostname: 'polkadot.js.org',
