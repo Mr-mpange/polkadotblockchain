@@ -16,8 +16,12 @@ exports.getAllAlerts = async (req, res) => {
         title: 'High Transaction Volume Detected',
         message: 'Acala network experiencing 300% increase in transaction volume',
         parachain: 'Acala',
+        parachainId: '2000',
         timestamp: new Date(Date.now() - 3600000).toISOString(),
-        acknowledged: false
+        firstSeen: new Date(Date.now() - 3600000).toISOString(),
+        lastSeen: new Date(Date.now() - 300000).toISOString(),
+        acknowledged: false,
+        count: 5
       },
       {
         id: 2,
@@ -26,8 +30,12 @@ exports.getAllAlerts = async (req, res) => {
         title: 'TVL Fluctuation',
         message: 'Moonbeam TVL decreased by 15% in the last hour',
         parachain: 'Moonbeam',
+        parachainId: '2001',
         timestamp: new Date(Date.now() - 7200000).toISOString(),
-        acknowledged: false
+        firstSeen: new Date(Date.now() - 7200000).toISOString(),
+        lastSeen: new Date(Date.now() - 600000).toISOString(),
+        acknowledged: false,
+        count: 3
       },
       {
         id: 3,
@@ -36,8 +44,12 @@ exports.getAllAlerts = async (req, res) => {
         title: 'Network Latency',
         message: 'Minor network latency detected on Astar',
         parachain: 'Astar',
+        parachainId: '2004',
         timestamp: new Date(Date.now() - 86400000).toISOString(),
-        acknowledged: true
+        firstSeen: new Date(Date.now() - 86400000).toISOString(),
+        lastSeen: new Date(Date.now() - 82800000).toISOString(),
+        acknowledged: true,
+        count: 1
       }
     ];
 
@@ -83,8 +95,12 @@ exports.getAlertById = async (req, res) => {
       title: 'High Transaction Volume Detected',
       message: 'Acala network experiencing 300% increase in transaction volume',
       parachain: 'Acala',
+      parachainId: '2000',
       timestamp: new Date(Date.now() - 3600000).toISOString(),
+      firstSeen: new Date(Date.now() - 3600000).toISOString(),
+      lastSeen: new Date(Date.now() - 300000).toISOString(),
       acknowledged: false,
+      count: 5,
       details: {
         currentVolume: 150000,
         normalVolume: 50000,
