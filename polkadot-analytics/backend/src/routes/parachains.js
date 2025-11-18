@@ -53,10 +53,12 @@ router.get('/', async (req, res) => {
     const parachains = KNOWN_PARACHAINS.map(parachain => {
       return {
         id: parachain.id,
+        parachain_id: parachain.id, // Add for frontend compatibility
         name: parachain.name,
         isActive: true,
         tokenSymbol: parachain.symbol,
         category: parachain.category,
+        description: `${parachain.name} is a ${parachain.category} parachain on Polkadot`,
         currentLease: 8,
         leaseStart: 8,
         leaseEnd: 15,
@@ -78,10 +80,12 @@ router.get('/', async (req, res) => {
     // Fallback to basic data if Subscan fails
     const fallbackData = KNOWN_PARACHAINS.map(p => ({
       id: p.id,
+      parachain_id: p.id, // Add for frontend compatibility
       name: p.name,
       isActive: true,
       tokenSymbol: p.symbol,
       category: p.category,
+      description: `${p.name} is a ${p.category} parachain on Polkadot`,
       tvl: 0,
       lastUpdated: new Date().toISOString()
     }));
