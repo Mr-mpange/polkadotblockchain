@@ -195,6 +195,19 @@ class ApiService {
         }));
       };
       
+      // Generate mock parachain data if not provided
+      const mockTopParachains = [
+        { id: '2000', name: 'Acala', tvl: 500000000, percentage: 33.3, color: '#E6007A' },
+        { id: '2001', name: 'Moonbeam', tvl: 750000000, percentage: 50.0, color: '#53CBC9' },
+        { id: '2004', name: 'Astar', tvl: 250000000, percentage: 16.7, color: '#0070EB' }
+      ];
+
+      const mockMostActiveParachains = [
+        { id: '2000', name: 'Acala', transactions: 125000, activeAccounts: 15000, color: '#E6007A' },
+        { id: '2001', name: 'Moonbeam', transactions: 180000, activeAccounts: 22000, color: '#53CBC9' },
+        { id: '2004', name: 'Astar', transactions: 95000, activeAccounts: 12000, color: '#0070EB' }
+      ];
+      
       // Transform snake_case to camelCase for frontend
       return {
         totalTVL: data.total_tvl,
@@ -208,8 +221,8 @@ class ApiService {
         recentActivity: data.recent_activity || [],
         tvlHistory: data.tvl_history || generateMockTVLHistory(),
         activityHistory: data.activity_history || generateMockActivityHistory(),
-        topParachains: data.top_parachains || [],
-        mostActiveParachains: data.most_active_parachains || [],
+        topParachains: data.top_parachains || mockTopParachains,
+        mostActiveParachains: data.most_active_parachains || mockMostActiveParachains,
         period: period,
         updatedAt: new Date().toISOString()
       };
