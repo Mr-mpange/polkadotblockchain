@@ -396,7 +396,7 @@ const Dashboard = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {parachainsData?.map((parachain) => (
+                      {parachainsData?.data?.map((parachain) => (
                         <tr key={parachain.id} className="border-b hover:bg-muted/50">
                           <td className="p-4">
                             <div className="flex items-center space-x-3">

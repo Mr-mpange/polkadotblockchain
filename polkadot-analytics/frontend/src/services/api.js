@@ -284,16 +284,22 @@ class ApiService {
         data: response.data
       });
       
-      // Handle different response formats
+      // Handle different response formats and return wrapped format for consistency
+      let parachainsArray = [];
       if (response.data && Array.isArray(response.data)) {
-        return response.data; // Direct array response
+        parachainsArray = response.data; // Direct array response
       } else if (response.data && response.data.data) {
-        return response.data.data; // Wrapped response
+        parachainsArray = response.data.data; // Wrapped response
       } else if (response.data) {
-        return [response.data]; // Single item response as array
+        parachainsArray = [response.data]; // Single item response as array
       }
       
-      return []; // Default empty array
+      // Return wrapped format for consistency across all pages
+      return {
+        data: parachainsArray,
+        total: parachainsArray.length,
+        status: 'success'
+      };
     } catch (error) {
       console.error('Error in getParachains:', {
         message: error.message,
@@ -304,24 +310,39 @@ class ApiService {
       // Return mock data in case of error for development
       if (process.env.NODE_ENV !== 'production') {
         console.warn('Using mock parachains data due to error');
-        return [
-          {
-            id: '2000',
-            name: 'Acala',
-            isActive: true,
-            tokenSymbol: 'ACA',
-            tvl: 500000000,
-            lastUpdated: new Date().toISOString()
-          },
-          {
-            id: '2001',
-            name: 'Moonbeam',
-            isActive: true,
-            tokenSymbol: 'GLMR',
-            tvl: 750000000,
-            lastUpdated: new Date().toISOString()
-          }
-        ];
+        return {
+          data: [
+            {
+              id: '2000',
+              name: 'Acala',
+              isActive: true,
+              tokenSymbol: 'ACA',
+              tvl: 500000000,
+              category: 'DeFi',
+              lastUpdated: new Date().toISOString()
+            },
+            {
+              id: '2001',
+              name: 'Moonbeam',
+              isActive: true,
+              tokenSymbol: 'GLMR',
+              tvl: 750000000,
+              category: 'Smart Contracts',
+              lastUpdated: new Date().toISOString()
+            },
+            {
+              id: '2004',
+              name: 'Astar',
+              isActive: true,
+              tokenSymbol: 'ASTR',
+              tvl: 250000000,
+              category: 'Smart Contracts',
+              lastUpdated: new Date().toISOString()
+            }
+          ],
+          total: 3,
+          status: 'success'
+        };
       }
       
       throw error;
