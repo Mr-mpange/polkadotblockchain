@@ -60,34 +60,49 @@ export function AIInsights({ parachainId }) {
               <p className="text-sm mt-2">The AI is analyzing parachain data...</p>
             </div>
           ) : (
-            insightsData.insights?.map((insight, index) => (
-            <div
-              key={index}
-              className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg border border-purple-200 dark:border-purple-800"
-            >
-              <div className="flex items-start gap-3">
-                {insight.type === 'positive' && (
-                  <FiTrendingUp className="h-5 w-5 text-green-600 mt-1" />
-                )}
-                {insight.type === 'negative' && (
-                  <FiTrendingDown className="h-5 w-5 text-red-600 mt-1" />
-                )}
-                {insight.type === 'warning' && (
-                  <FiAlertTriangle className="h-5 w-5 text-yellow-600 mt-1" />
-                )}
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {insight.message}
-                  </p>
-                  {insight.confidence && (
-                    <Badge variant="outline" className="mt-2">
-                      Confidence: {(insight.confidence * 100).toFixed(0)}%
-                    </Badge>
-                  )}
+            insightsData.insights?.map((insight, index) => {
+              // Handle both string and object formats
+              const isString = typeof insight === 'string';
+              const message = isString ? insight : insight.message;
+              const type = isString ? 'neutral' : insight.type;
+              const confidence = isString ? insightsData.confidence : insight.confidence;
+              
+              // Determine icon based on message content if type is neutral
+              let IconComponent = FiCpu;
+              let iconColor = 'text-blue-600';
+              
+              if (type === 'positive' || message.toLowerCase().includes('increase') || message.toLowerCase().includes('growth')) {
+                IconComponent = FiTrendingUp;
+                iconColor = 'text-green-600';
+              } else if (type === 'negative' || message.toLowerCase().includes('decrease') || message.toLowerCase().includes('decline')) {
+                IconComponent = FiTrendingDown;
+                iconColor = 'text-red-600';
+              } else if (type === 'warning' || message.toLowerCase().includes('volatile') || message.toLowerCase().includes('unstable')) {
+                IconComponent = FiAlertTriangle;
+                iconColor = 'text-yellow-600';
+              }
+              
+              return (
+                <div
+                  key={index}
+                  className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg border border-purple-200 dark:border-purple-800"
+                >
+                  <div className="flex items-start gap-3">
+                    <IconComponent className={`h-5 w-5 ${iconColor} mt-1 flex-shrink-0`} />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {message}
+                      </p>
+                      {confidence && (
+                        <Badge variant="outline" className="mt-2">
+                          Confidence: {(confidence * 100).toFixed(0)}%
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))
+              );
+            })
           )}
           
           {insightsData.summary && (
