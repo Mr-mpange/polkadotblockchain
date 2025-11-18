@@ -37,12 +37,23 @@ export function AIPredictions({ parachainId }) {
   }
 
   const predData = predictions.data;
-  const chartData = predData.predictions?.map((pred, index) => ({
-    period: `+${index + 1}d`,
-    predicted: pred.value,
-    confidence_high: pred.confidence_interval?.high,
-    confidence_low: pred.confidence_interval?.low,
-  })) || [];
+  
+  // Map predictions to chart data format
+  const chartData = predData.predictions?.map((pred, index) => {
+    const predictedValue = pred.predicted_value || pred.value || 0;
+    const currentValue = pred.current_value || predictedValue;
+    const changePercent = pred.change_percent || 0;
+    
+    // Calculate confidence intervals if not provided
+    const confidenceMargin = Math.abs(predictedValue * 0.15); // 15% margin
+    
+    return {
+      period: pred.timeframe || `+${index + 1}d`,
+      predicted: predictedValue,
+      confidence_high: pred.confidence_interval?.high || (predictedValue + confidenceMargin),
+      confidence_low: pred.confidence_interval?.low || (predictedValue - confidenceMargin),
+    };
+  }) || [];
 
   return (
     <Card>
