@@ -422,15 +422,7 @@ class ApiService {
     }
   }
 
-  async getParachainActivity(id, params = {}) {
-    try {
-      const response = await this.client.get(`/api/parachains/${id}/activity`, { params });
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching activity for parachain ${id}:`, error);
-      throw error;
-    }
-  }
+  // Parachain activity endpoint removed - not implemented
 
   // TVL endpoints
   /**
@@ -519,26 +511,7 @@ class ApiService {
     }
   }
 
-  // Activity endpoints
-  async getActivity(params = {}) {
-    try {
-      const response = await this.client.get('/api/activity', { params });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching activity data:', error);
-      throw error;
-    }
-  }
-
-  async getActivityHistory(parachainId, params = {}) {
-    try {
-      const response = await this.client.get(`/api/activity/${parachainId}/history`, { params });
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching activity history for parachain ${parachainId}:`, error);
-      throw error;
-    }
-  }
+  // Activity endpoints removed - not implemented
 
   // History endpoints
   async getHistory(params = {}) {

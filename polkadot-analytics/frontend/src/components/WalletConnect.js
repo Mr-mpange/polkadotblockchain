@@ -6,6 +6,12 @@ import { FiLogIn, FiExternalLink, FiCopy, FiCheck, FiUser, FiSettings, FiLogOut 
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 
+// Polkadot extension detection
+const getPolkadotExtension = () => {
+  if (typeof window === 'undefined') return null;
+  return window.injectedWeb3?.['polkadot-js'] || null;
+};
+
 const WalletConnect = ({ className = '' }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -20,30 +26,31 @@ const WalletConnect = ({ className = '' }) => {
 
   const checkConnection = async () => {
     try {
-      // Check if Polkadot.js extension is available
-      if (typeof window !== 'undefined' && window.injectedWeb3) {
-        const polkadotExtension = window.injectedWeb3['polkadot-js'];
-
-        if (polkadotExtension) {
-          // Check if already connected
-          const accounts = await polkadotExtension.enable('Polkadot Analytics');
-
-          if (accounts && accounts.length > 0) {
-            setIsConnected(true);
-            setAccount(accounts[0]);
-            await fetchBalance(accounts[0].address);
-          }
-        }
+      // Check for stored account
+      const storedAccount = localStorage.getItem('polkadot-account');
+      if (storedAccount) {
+        const parsedAccount = JSON.parse(storedAccount);
+        setAccount(parsedAccount);
+        setIsConnected(true);
+        await fetchBalance(parsedAccount.address);
       }
     } catch (error) {
       console.error('Error checking connection:', error);
+      localStorage.removeItem('polkadot-account');
     }
   };
 
   const fetchBalance = async (address) => {
     try {
-      // Fetch balance from backend API (which uses Subscan)
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/subscan/balance/${address}`);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/subscan/balance/${address}`);
+      
+      if (!response.ok) {
+        // Balance endpoint not available, skip it
+        setBalance(null);
+        return;
+      }
+      
       const data = await response.json();
       
       if (data.status === 'success' && data.data?.data) {
@@ -52,11 +59,12 @@ const WalletConnect = ({ className = '' }) => {
         const dotBalance = (parseInt(balanceData.balance || 0) / 10000000000).toFixed(4);
         setBalance(`${dotBalance} DOT`);
       } else {
-        setBalance('0.0000 DOT');
+        setBalance(null);
       }
     } catch (error) {
       console.error('Error fetching balance:', error);
-      setBalance('Unable to fetch');
+      // Don't show error, just skip balance display
+      setBalance(null);
     }
   };
 
@@ -64,34 +72,47 @@ const WalletConnect = ({ className = '' }) => {
     setIsConnecting(true);
 
     try {
-      if (typeof window !== 'undefined' && window.injectedWeb3) {
-        const polkadotExtension = window.injectedWeb3['polkadot-js'];
+      const extension = getPolkadotExtension();
 
-        if (!polkadotExtension) {
-          // Redirect to install extension
-          window.open('https://polkadot.js.org/extension/', '_blank');
-          return;
-        }
-
-        // Enable the extension
-        const accounts = await polkadotExtension.enable('Polkadot Analytics');
-
-        if (accounts && accounts.length > 0) {
-          setIsConnected(true);
-          setAccount(accounts[0]);
-          await fetchBalance(accounts[0].address);
-
-          // Store connection in localStorage for persistence
-          localStorage.setItem('polkadot-account', JSON.stringify(accounts[0]));
-        }
-      } else {
+      if (!extension) {
         // No extension available
-        alert('Please install the Polkadot.js extension to connect your wallet.');
-        window.open('https://polkadot.js.org/extension/', '_blank');
+        const install = confirm('Polkadot.js extension not found. Would you like to install it?');
+        if (install) {
+          window.open('https://polkadot.js.org/extension/', '_blank');
+        }
+        setIsConnecting(false);
+        return;
+      }
+
+      // Enable the extension
+      const injected = await extension.enable('Polkadot Analytics');
+      
+      if (!injected || !injected.accounts) {
+        throw new Error('Failed to enable extension');
+      }
+
+      // Get accounts
+      const accounts = await injected.accounts.get();
+
+      if (accounts && accounts.length > 0) {
+        const selectedAccount = accounts[0];
+        setIsConnected(true);
+        setAccount(selectedAccount);
+        await fetchBalance(selectedAccount.address);
+
+        // Store connection in localStorage for persistence
+        localStorage.setItem('polkadot-account', JSON.stringify(selectedAccount));
+      } else {
+        alert('No accounts found. Please create an account in the Polkadot.js extension.');
       }
     } catch (error) {
       console.error('Error connecting wallet:', error);
-      alert('Failed to connect wallet. Please try again.');
+      
+      if (error.message.includes('Rejected')) {
+        alert('Connection rejected. Please approve the connection in your wallet.');
+      } else {
+        alert('Failed to connect wallet. Please make sure the Polkadot.js extension is installed and try again.');
+      }
     } finally {
       setIsConnecting(false);
     }
