@@ -106,6 +106,9 @@ const corsOptions = {
     'X-Requested-With',
     'Accept',
     'Origin',
+    'Cache-Control',
+    'Pragma',
+    'Expires',
     'Access-Control-Allow-Headers'
   ],
   credentials: true,

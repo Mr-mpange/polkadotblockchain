@@ -65,11 +65,13 @@ class PolkadotAnalyticsApp {
       
       // Always set CORS headers for allowed origins
       if (allowedOrigins.includes(origin) || !origin) {
+        const headers = 'Content-Type, Authorization, Cache-Control, Pragma, Expires, X-Requested-With, Accept';
         res.setHeader('Access-Control-Allow-Origin', origin || 'http://localhost:3000');
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cache-Control, X-Requested-With');
+        res.setHeader('Access-Control-Allow-Headers', headers);
         res.setHeader('Access-Control-Allow-Credentials', 'true');
         res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
+        console.log('[CORS] Set headers:', headers);
       }
       
       // Handle preflight requests immediately

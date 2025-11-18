@@ -166,7 +166,7 @@ class ApiService {
       console.log(`Fetching dashboard data for period: ${period}`);
       console.log(`API Base URL: ${this.baseURL}`);
       
-      const response = await this.client.get('/dashboard', {
+      const response = await this.client.get('/api/dashboard', {
         params: { period },
         timeout: 10000 // 10 second timeout
       });
@@ -267,7 +267,7 @@ class ApiService {
   async getParachains(params = {}) {
     try {
       console.log('Fetching parachains with params:', params);
-      const response = await this.client.get('/parachains', { 
+      const response = await this.client.get('/api/parachains', { 
         params,
         // Add timeout and other options if needed
         timeout: 10000,
@@ -352,7 +352,7 @@ class ApiService {
   async getParachainById(id) {
     try {
       console.log(`Fetching parachain with ID: ${id}`);
-      const response = await this.client.get(`/parachains/${id}`, {
+      const response = await this.client.get(`/api/parachains/${id}`, {
         headers: {
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache'
@@ -402,7 +402,7 @@ class ApiService {
 
   async getParachainMetrics(id, period = '24h') {
     try {
-      const response = await this.client.get(`/parachains/${id}/metrics`, {
+      const response = await this.client.get(`/api/parachains/${id}/metrics`, {
         params: { period }
       });
       return response.data;
@@ -414,7 +414,7 @@ class ApiService {
 
   async getParachainTVL(id, params = {}) {
     try {
-      const response = await this.client.get(`/parachains/${id}/tvl`, { params });
+      const response = await this.client.get(`/api/parachains/${id}/tvl`, { params });
       return response.data;
     } catch (error) {
       console.error(`Error fetching TVL for parachain ${id}:`, error);
@@ -424,7 +424,7 @@ class ApiService {
 
   async getParachainActivity(id, params = {}) {
     try {
-      const response = await this.client.get(`/parachains/${id}/activity`, { params });
+      const response = await this.client.get(`/api/parachains/${id}/activity`, { params });
       return response.data;
     } catch (error) {
       console.error(`Error fetching activity for parachain ${id}:`, error);
@@ -443,7 +443,7 @@ class ApiService {
   async getTVL(params = {}) {
     try {
       console.log('Fetching TVL data with params:', params);
-      const response = await this.client.get('/tvl', { 
+      const response = await this.client.get('/api/tvl', { 
         params,
         // Enable caching for better performance
         headers: {
@@ -511,7 +511,7 @@ class ApiService {
 
   async getTVLHistory(parachainId, params = {}) {
     try {
-      const response = await this.client.get(`/tvl/${parachainId}/history`, { params });
+      const response = await this.client.get(`/api/tvl/${parachainId}/history`, { params });
       return response.data;
     } catch (error) {
       console.error(`Error fetching TVL history for parachain ${parachainId}:`, error);
@@ -522,7 +522,7 @@ class ApiService {
   // Activity endpoints
   async getActivity(params = {}) {
     try {
-      const response = await this.client.get('/activity', { params });
+      const response = await this.client.get('/api/activity', { params });
       return response.data;
     } catch (error) {
       console.error('Error fetching activity data:', error);
@@ -532,7 +532,7 @@ class ApiService {
 
   async getActivityHistory(parachainId, params = {}) {
     try {
-      const response = await this.client.get(`/activity/${parachainId}/history`, { params });
+      const response = await this.client.get(`/api/activity/${parachainId}/history`, { params });
       return response.data;
     } catch (error) {
       console.error(`Error fetching activity history for parachain ${parachainId}:`, error);
@@ -543,7 +543,7 @@ class ApiService {
   // History endpoints
   async getHistory(params = {}) {
     try {
-      const response = await this.client.get('/history', { params });
+      const response = await this.client.get('/api/history', { params });
       return response.data;
     } catch (error) {
       console.error('Error fetching history data:', error);
@@ -554,7 +554,7 @@ class ApiService {
   // Alerts endpoints
   async getAlerts(params = {}) {
     try {
-      const response = await this.client.get('/alerts', { params });
+      const response = await this.client.get('/api/alerts', { params });
       return response.data;
     } catch (error) {
       console.error('Error fetching alerts:', error);
@@ -564,7 +564,7 @@ class ApiService {
 
   async acknowledgeAlert(alertId, userId) {
     try {
-      const response = await this.client.put(`/alerts/${alertId}/acknowledge`, { userId });
+      const response = await this.client.put(`/api/alerts/${alertId}/acknowledge`, { userId });
       return response.data;
     } catch (error) {
       console.error(`Error acknowledging alert ${alertId}:`, error);
@@ -574,7 +574,7 @@ class ApiService {
 
   async resolveAlert(alertId, userId) {
     try {
-      const response = await this.client.put(`/alerts/${alertId}/resolve`, { userId });
+      const response = await this.client.put(`/api/alerts/${alertId}/resolve`, { userId });
       return response.data;
     } catch (error) {
       console.error(`Error resolving alert ${alertId}:`, error);
@@ -585,7 +585,7 @@ class ApiService {
   // Auth endpoints
   async login(credentials) {
     try {
-      const response = await this.client.post('/auth/login', credentials);
+      const response = await this.client.post('/api/auth/login', credentials);
       return response.data;
     } catch (error) {
       console.error('Error logging in:', error);
@@ -595,7 +595,7 @@ class ApiService {
 
   async register(userData) {
     try {
-      const response = await this.client.post('/auth/register', userData);
+      const response = await this.client.post('/api/auth/register', userData);
       return response.data;
     } catch (error) {
       console.error('Error registering:', error);
@@ -605,7 +605,7 @@ class ApiService {
 
   async logout() {
     try {
-      const response = await this.client.post('/auth/logout');
+      const response = await this.client.post('/api/auth/logout');
       return response.data;
     } catch (error) {
       console.error('Error logging out:', error);
@@ -615,7 +615,7 @@ class ApiService {
 
   async getProfile() {
     try {
-      const response = await this.client.get('/auth/profile');
+      const response = await this.client.get('/api/auth/profile');
       return response.data;
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -625,7 +625,7 @@ class ApiService {
 
   async updateProfile(userData) {
     try {
-      const response = await this.client.put('/auth/profile', userData);
+      const response = await this.client.put('/api/auth/profile', userData);
       return response.data;
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -636,7 +636,7 @@ class ApiService {
   // Polkadot API endpoints
   async getChainInfo() {
     try {
-      const response = await this.client.get('/polkadot/chain-info');
+      const response = await this.client.get('/api/polkadot/chain-info');
       return response.data;
     } catch (error) {
       console.error('Error fetching chain info:', error);
@@ -646,7 +646,7 @@ class ApiService {
 
   async getBlockMetrics() {
     try {
-      const response = await this.client.get('/polkadot/block-metrics');
+      const response = await this.client.get('/api/polkadot/block-metrics');
       return response.data;
     } catch (error) {
       console.error('Error fetching block metrics:', error);
@@ -656,7 +656,7 @@ class ApiService {
 
   async getValidatorInfo() {
     try {
-      const response = await this.client.get('/polkadot/validators');
+      const response = await this.client.get('/api/polkadot/validators');
       return response.data;
     } catch (error) {
       console.error('Error fetching validator info:', error);
@@ -667,7 +667,7 @@ class ApiService {
   // Analytics endpoints (for AI insights)
   async getAnalyticsInsights(parachainId, params = {}) {
     try {
-      const response = await this.client.get(`/analytics/insights/${parachainId}`, { params });
+      const response = await this.client.get(`/api/analytics/insights/${parachainId}`, { params });
       return response.data;
     } catch (error) {
       console.error(`Error fetching analytics for parachain ${parachainId}:`, error);
@@ -677,7 +677,7 @@ class ApiService {
 
   async getPredictions(parachainId, params = {}) {
     try {
-      const response = await this.client.get(`/analytics/predictions/${parachainId}`, { params });
+      const response = await this.client.get(`/api/analytics/predictions/${parachainId}`, { params });
       return response.data;
     } catch (error) {
       console.error(`Error fetching predictions for parachain ${parachainId}:`, error);
@@ -724,7 +724,7 @@ class ApiService {
   // Subscan API endpoints
   async getAccountInfo(address) {
     try {
-      const response = await this.client.get(`/subscan/account/${address}`);
+      const response = await this.client.get(`/api/subscan/account/${address}`);
       return response.data;
     } catch (error) {
       console.error(`Error fetching account info for ${address}:`, error);
@@ -734,7 +734,7 @@ class ApiService {
 
   async getAccountBalance(address) {
     try {
-      const response = await this.client.get(`/subscan/balance/${address}`);
+      const response = await this.client.get(`/api/subscan/balance/${address}`);
       return response.data;
     } catch (error) {
       console.error(`Error fetching balance for ${address}:`, error);
@@ -744,7 +744,7 @@ class ApiService {
 
   async getAccountTransactions(address, page = 0, row = 20) {
     try {
-      const response = await this.client.get(`/subscan/transactions/${address}`, {
+      const response = await this.client.get(`/api/subscan/transactions/${address}`, {
         params: { page, row }
       });
       return response.data;
@@ -756,7 +756,7 @@ class ApiService {
 
   async getBlockInfo(blockNumber) {
     try {
-      const response = await this.client.get(`/subscan/block/${blockNumber}`);
+      const response = await this.client.get(`/api/subscan/block/${blockNumber}`);
       return response.data;
     } catch (error) {
       console.error(`Error fetching block ${blockNumber}:`, error);
@@ -766,7 +766,7 @@ class ApiService {
 
   async getExtrinsicInfo(hash) {
     try {
-      const response = await this.client.get(`/subscan/extrinsic/${hash}`);
+      const response = await this.client.get(`/api/subscan/extrinsic/${hash}`);
       return response.data;
     } catch (error) {
       console.error(`Error fetching extrinsic ${hash}:`, error);
@@ -776,7 +776,7 @@ class ApiService {
 
   async getSubscanMetadata() {
     try {
-      const response = await this.client.get('/subscan/metadata');
+      const response = await this.client.get('/api/subscan/metadata');
       return response.data;
     } catch (error) {
       console.error('Error fetching Subscan metadata:', error);
@@ -786,7 +786,7 @@ class ApiService {
 
   async getDailyStats(start, end) {
     try {
-      const response = await this.client.get('/subscan/daily-stats', {
+      const response = await this.client.get('/api/subscan/daily-stats', {
         params: { start, end }
       });
       return response.data;
@@ -798,7 +798,7 @@ class ApiService {
 
   async getParachainInfoFromSubscan(parachainId) {
     try {
-      const response = await this.client.get(`/subscan/parachain/${parachainId}`);
+      const response = await this.client.get(`/api/subscan/parachain/${parachainId}`);
       return response.data;
     } catch (error) {
       console.error(`Error fetching parachain ${parachainId} from Subscan:`, error);
@@ -808,7 +808,7 @@ class ApiService {
 
   async getValidatorsFromSubscan() {
     try {
-      const response = await this.client.get('/subscan/validators');
+      const response = await this.client.get('/api/subscan/validators');
       return response.data;
     } catch (error) {
       console.error('Error fetching validators from Subscan:', error);
@@ -818,7 +818,7 @@ class ApiService {
 
   async getStakingInfo(address) {
     try {
-      const response = await this.client.get(`/subscan/staking/${address}`);
+      const response = await this.client.get(`/api/subscan/staking/${address}`);
       return response.data;
     } catch (error) {
       console.error(`Error fetching staking info for ${address}:`, error);
