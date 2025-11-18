@@ -75,11 +75,14 @@ const WalletConnect = ({ className = '' }) => {
       const extension = getPolkadotExtension();
 
       if (!extension) {
-        // No extension available
-        const install = confirm('Polkadot.js extension not found. Would you like to install it?');
-        if (install) {
-          window.open('https://polkadot.js.org/extension/', '_blank');
-        }
+        // No extension available - show helpful message
+        alert(
+          'Polkadot.js Extension Not Found\n\n' +
+          'Please install the Polkadot.js browser extension:\n\n' +
+          '• Chrome/Brave: Search "Polkadot.js extension" in Chrome Web Store\n' +
+          '• Firefox: Search "Polkadot.js extension" in Firefox Add-ons\n\n' +
+          'After installation, refresh this page and try again.'
+        );
         setIsConnecting(false);
         return;
       }
