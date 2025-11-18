@@ -48,6 +48,14 @@ const Dashboard = () => {
     staleTime: 60000,
   });
 
+  // Fetch AI health status
+  const { data: aiHealth } = useQuery({
+    queryKey: ['ai-health'],
+    queryFn: () => api.getAIHealth(),
+    refetchInterval: 60000, // Check every minute
+    retry: false,
+  });
+
   // Fetch alerts data
   const { data: alertsData } = useQuery({
     queryKey: ['alerts'],
@@ -110,6 +118,19 @@ const Dashboard = () => {
             </div>
 
             <div className="flex items-center space-x-4">
+              {/* AI Status Badge */}
+              {aiHealth?.data && (
+                <Badge 
+                  variant={aiHealth.data.status === 'healthy' ? 'default' : 'secondary'}
+                  className="flex items-center gap-1"
+                >
+                  <span className={`w-2 h-2 rounded-full ${
+                    aiHealth.data.status === 'healthy' ? 'bg-green-500' : 'bg-yellow-500'
+                  }`} />
+                  AI {aiHealth.data.status === 'healthy' ? 'Active' : 'Ready'}
+                </Badge>
+              )}
+
               {/* Wallet Connect */}
               <WalletConnect />
 

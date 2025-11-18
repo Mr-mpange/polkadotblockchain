@@ -664,24 +664,34 @@ class ApiService {
     }
   }
 
-  // Analytics endpoints (for AI insights)
-  async getAnalyticsInsights(parachainId, params = {}) {
+  // AI Analytics endpoints
+  async getAIInsights(parachainId, params = {}) {
     try {
-      const response = await this.client.get(`/api/analytics/insights/${parachainId}`, { params });
+      const response = await this.client.get(`/api/ai-analytics/insights/${parachainId}`, { params });
       return response.data;
     } catch (error) {
-      console.error(`Error fetching analytics for parachain ${parachainId}:`, error);
-      throw error;
+      console.error(`Error fetching AI insights for parachain ${parachainId}:`, error);
+      return null;
     }
   }
 
-  async getPredictions(parachainId, params = {}) {
+  async getAIPredictions(parachainId, params = {}) {
     try {
-      const response = await this.client.get(`/api/analytics/predictions/${parachainId}`, { params });
+      const response = await this.client.get(`/api/ai-analytics/predictions/${parachainId}`, { params });
       return response.data;
     } catch (error) {
-      console.error(`Error fetching predictions for parachain ${parachainId}:`, error);
-      throw error;
+      console.error(`Error fetching AI predictions for parachain ${parachainId}:`, error);
+      return null;
+    }
+  }
+
+  async getAIHealth() {
+    try {
+      const response = await this.client.get('/api/ai-analytics/health');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching AI health:', error);
+      return null;
     }
   }
 

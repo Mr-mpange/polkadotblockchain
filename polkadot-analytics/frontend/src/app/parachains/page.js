@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { FiSearch, FiGrid, FiList, FiFilter } from 'react-icons/fi';
+import { useRouter } from 'next/navigation';
+import { FiSearch, FiGrid, FiList, FiFilter, FiCpu } from 'react-icons/fi';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { api } from '../../services/api';
 
 export default function ParachainsPage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('grid');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -110,7 +112,10 @@ export default function ParachainsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
             >
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <Card 
+                className="hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => router.push(`/parachains/${parachain.parachain_id}`)}
+              >
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div>
@@ -143,9 +148,23 @@ export default function ParachainsPage() {
                       </div>
                     </div>
 
-                    <Button className="w-full mt-4" variant="outline" size="sm">
-                      View Details
-                    </Button>
+                    <div className="flex items-center gap-2 mt-4">
+                      <Button 
+                        className="flex-1" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/parachains/${parachain.parachain_id}`);
+                        }}
+                      >
+                        View Details
+                      </Button>
+                      <Badge variant="outline" className="flex items-center gap-1 text-purple-600 border-purple-300">
+                        <FiCpu className="h-3 w-3" />
+                        AI
+                      </Badge>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
