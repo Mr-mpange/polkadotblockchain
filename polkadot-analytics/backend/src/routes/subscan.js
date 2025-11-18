@@ -198,25 +198,12 @@ router.get('/parachain/:id', async (req, res) => {
     
     const data = await subscanService.getParachainInfo(parseInt(id));
     
-    // Handle potential circular references in the response
-    const cache = new WeakSet();
-    const safeData = JSON.parse(JSON.stringify(data, (key, value) => {
-      // Remove circular references and functions
-      if (typeof value === 'object' && value !== null) {
-        if (cache.has(value)) {
-          return '[Circular]';
-        }
-        cache.add(value);
-      }
-      return value;
-    }));
-    
     res.json({
       status: 'success',
-      data: safeData
+      data: data
     });
   } catch (error) {
-    logger.error('Error in /parachain/:id:', error);
+    logger.error('Error in /parachain/:id:', error.message);
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch parachain information',

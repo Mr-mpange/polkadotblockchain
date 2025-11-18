@@ -145,8 +145,12 @@ class SubscanService {
       });
       return response.data;
     } catch (error) {
-      logger.error(`Error fetching parachain ${parachainId}:`, error);
-      throw error;
+      logger.error(`Error fetching parachain ${parachainId}:`, error.message);
+      // Create a clean error object without circular references
+      const cleanError = new Error(error.message);
+      cleanError.status = error.response?.status;
+      cleanError.statusText = error.response?.statusText;
+      throw cleanError;
     }
   }
 
