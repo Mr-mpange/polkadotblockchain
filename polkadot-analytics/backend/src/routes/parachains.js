@@ -179,14 +179,37 @@ router.get('/:id', (req, res) => {
     const { id } = req.params;
     console.log(`GET /api/parachains/${id}`);
     
-    const parachain = mockParachains.find(p => p.id === id);
+    // Find parachain in KNOWN_PARACHAINS
+    const knownParachain = KNOWN_PARACHAINS.find(p => p.id === id);
     
-    if (!parachain) {
+    if (!knownParachain) {
       return res.status(404).json({
         status: 'error',
         message: 'Parachain not found'
       });
     }
+    
+    // Build parachain data similar to the list endpoint
+    const baseTVL = 2500000000;
+    const distributions = [0.045, 0.197, 0.251, 0.263, 0.308, 0.237, 0.057, 0.331, 0.237, 0.115, 0.212, 0.340];
+    const index = KNOWN_PARACHAINS.findIndex(p => p.id === id);
+    
+    const parachain = {
+      id: knownParachain.id,
+      parachain_id: knownParachain.id,
+      name: knownParachain.name,
+      isActive: true,
+      tokenSymbol: knownParachain.symbol,
+      category: knownParachain.category,
+      description: `${knownParachain.name} is a ${knownParachain.category} parachain on Polkadot`,
+      tvl: Math.floor(baseTVL * distributions[index]),
+      tvl_change_24h: parseFloat((1 + Math.random() * 4).toFixed(2)),
+      transactions_24h: 50000 + Math.floor(Math.random() * 100000),
+      currentLease: 8,
+      leaseStart: 8,
+      leaseEnd: 15,
+      lastUpdated: new Date().toISOString()
+    };
     
     res.status(200).json({
       status: 'success',
