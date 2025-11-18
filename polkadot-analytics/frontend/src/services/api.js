@@ -214,7 +214,7 @@ class ApiService {
   async getParachains(params = {}) {
     try {
       console.log('Fetching parachains with params:', params);
-      const response = await this.client.get('/api/parachains', { 
+      const response = await this.client.get('/parachains', { 
         params,
         // Add timeout and other options if needed
         timeout: 10000,
@@ -278,7 +278,7 @@ class ApiService {
   async getParachainById(id) {
     try {
       console.log(`Fetching parachain with ID: ${id}`);
-      const response = await this.client.get(`/api/parachains/${id}`, {
+      const response = await this.client.get(`/parachains/${id}`, {
         headers: {
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache'

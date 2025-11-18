@@ -68,6 +68,16 @@ try {
   process.exit(1);
 }
 
+// Import Alerts routes
+let alertsRoutes;
+try {
+  alertsRoutes = require('./src/routes/alerts');
+  console.log('✅ Alerts routes module loaded successfully');
+} catch (error) {
+  console.error('❌ Failed to load Alerts routes:', error);
+  process.exit(1);
+}
+
 console.log('=== Route modules loaded ===\n');
 
 const app = express();
@@ -239,6 +249,18 @@ try {
   console.log('✅ Subscan routes mounted successfully');
 } catch (error) {
   console.error('❌ Failed to mount Subscan routes:', error);
+  process.exit(1);
+}
+
+console.log('\n🔧 Mounting Alerts routes at /api/alerts');
+try {
+  app.use('/api/alerts', (req, res, next) => {
+    console.log(`[${new Date().toISOString()}] 🚨 Alerts request: ${req.method} ${req.originalUrl}`);
+    next();
+  }, alertsRoutes);
+  console.log('✅ Alerts routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount Alerts routes:', error);
   process.exit(1);
 }
 
