@@ -59,87 +59,105 @@ export default function PortfolioPage() {
 
   if (!connectedAccount) {
     return (
-      <div className="container mx-auto p-6">
-        <Alert>
-          <FiAlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Please connect your wallet to view your portfolio.
-          </AlertDescription>
-        </Alert>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto p-6">
+          <div className="max-w-2xl mx-auto mt-20">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
+              <div className="flex items-start gap-3">
+                <FiAlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-yellow-900 dark:text-yellow-100 mb-1">
+                    Wallet Not Connected
+                  </h3>
+                  <p className="text-yellow-800 dark:text-yellow-200 text-sm">
+                    Please connect your wallet to view your portfolio and transaction history.
+                  </p>
+                  <button
+                    onClick={() => window.location.href = '/dashboard'}
+                    className="mt-4 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Go to Dashboard
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">My Portfolio</h1>
-        <p className="text-gray-600 mt-1">
-          {connectedAccount.meta?.name || formatAddress(connectedAccount.address)}
-        </p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto p-6 space-y-6">
+        {/* Header */}
+        <div className="border-b pb-4">
+          <h1 className="text-3xl font-bold text-foreground">My Portfolio</h1>
+          <p className="text-muted-foreground mt-1">
+            {connectedAccount.meta?.name || formatAddress(connectedAccount.address)}
+          </p>
+        </div>
 
-      {/* Balance Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-              <FiDollarSign className="h-4 w-4" />
-              Total Balance
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {balanceLoading ? (
-              <Skeleton className="h-8 w-32" />
-            ) : (
-              <div>
-                <div className="text-2xl font-bold">
-                  {formatBalance(balanceData?.data?.data?.balance)} DOT
+        {/* Balance Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <FiDollarSign className="h-4 w-4" />
+                Total Balance
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {balanceLoading ? (
+                <Skeleton className="h-8 w-32" />
+              ) : (
+                <div>
+                  <div className="text-2xl font-bold text-foreground">
+                    {formatBalance(balanceData?.data?.data?.balance)} DOT
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    ≈ ${((parseFloat(formatBalance(balanceData?.data?.data?.balance)) * 7.5).toFixed(2))}
+                  </p>
                 </div>
-                <p className="text-sm text-gray-500 mt-1">
-                  ≈ ${((parseFloat(formatBalance(balanceData?.data?.data?.balance)) * 7.5).toFixed(2))}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
 
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <FiActivity className="h-4 w-4" />
+                Total Transactions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {accountLoading ? (
+                <Skeleton className="h-8 w-24" />
+              ) : (
+                <div className="text-2xl font-bold text-foreground">
+                  {accountData?.data?.data?.count_extrinsic || 0}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <FiTrendingUp className="h-4 w-4" />
+                Account Status
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Badge variant="default" className="text-sm">
+                Active
+              </Badge>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Recent Transactions */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-              <FiActivity className="h-4 w-4" />
-              Total Transactions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {accountLoading ? (
-              <Skeleton className="h-8 w-24" />
-            ) : (
-              <div className="text-2xl font-bold">
-                {accountData?.data?.data?.count_extrinsic || 0}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-              <FiTrendingUp className="h-4 w-4" />
-              Account Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Badge variant="default" className="text-sm">
-              Active
-            </Badge>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Transactions */}
-      <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
@@ -171,19 +189,19 @@ export default function PortfolioPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <Badge variant={tx.from === connectedAccount.address ? 'destructive' : 'default'}>
                         {tx.from === connectedAccount.address ? 'Sent' : 'Received'}
                       </Badge>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-muted-foreground">
                         {formatTimestamp(tx.block_timestamp)}
                       </span>
                     </div>
                     <div className="text-sm">
-                      <span className="text-gray-600">
+                      <span className="text-muted-foreground">
                         {tx.from === connectedAccount.address ? 'To: ' : 'From: '}
                       </span>
                       <span className="font-mono">
@@ -208,41 +226,42 @@ export default function PortfolioPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               <p>No recent transactions found</p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Account Details */}
-      <Card>
+        {/* Account Details */}
+        <Card>
         <CardHeader>
           <CardTitle>Account Details</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <div className="flex justify-between py-2 border-b">
-              <span className="text-gray-600">Address</span>
-              <span className="font-mono text-sm">{connectedAccount.address}</span>
+            <div className="flex justify-between py-2 border-b border-border">
+              <span className="text-muted-foreground">Address</span>
+              <span className="font-mono text-sm text-foreground">{connectedAccount.address}</span>
             </div>
-            <div className="flex justify-between py-2 border-b">
-              <span className="text-gray-600">Account Name</span>
-              <span>{connectedAccount.meta?.name || 'Unnamed Account'}</span>
+            <div className="flex justify-between py-2 border-b border-border">
+              <span className="text-muted-foreground">Account Name</span>
+              <span className="text-foreground">{connectedAccount.meta?.name || 'Unnamed Account'}</span>
             </div>
-            <div className="flex justify-between py-2 border-b">
-              <span className="text-gray-600">Network</span>
+            <div className="flex justify-between py-2 border-b border-border">
+              <span className="text-muted-foreground">Network</span>
               <Badge>Polkadot</Badge>
             </div>
             {accountData?.data?.data?.nonce !== undefined && (
               <div className="flex justify-between py-2">
-                <span className="text-gray-600">Nonce</span>
-                <span>{accountData.data.data.nonce}</span>
+                <span className="text-muted-foreground">Nonce</span>
+                <span className="text-foreground">{accountData.data.data.nonce}</span>
               </div>
             )}
           </div>
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }
