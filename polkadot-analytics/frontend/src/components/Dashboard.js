@@ -118,6 +118,38 @@ const Dashboard = () => {
             </div>
 
             <div className="flex items-center space-x-4">
+              {/* Navigation Links */}
+              <div className="hidden md:flex items-center space-x-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => window.location.href = '/dashboard'}
+                >
+                  Dashboard
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => window.location.href = '/portfolio'}
+                >
+                  Portfolio
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => window.location.href = '/parachains'}
+                >
+                  Parachains
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => window.location.href = '/tvl'}
+                >
+                  TVL
+                </Button>
+              </div>
+
               {/* AI Status Badge */}
               {aiHealth?.data && (
                 <Badge 

@@ -26,6 +26,13 @@ export default function Home() {
       color: 'bg-blue-500'
     },
     {
+      title: 'My Portfolio',
+      description: 'Your wallet balance and transactions',
+      href: '/portfolio',
+      icon: FiActivity,
+      color: 'bg-indigo-500'
+    },
+    {
       title: 'TVL Analytics',
       description: 'Total Value Locked across parachains',
       href: '/tvl',
@@ -38,13 +45,6 @@ export default function Home() {
       href: '/parachains',
       icon: FiGrid,
       color: 'bg-purple-500'
-    },
-    {
-      title: 'Activity',
-      description: 'User activity and transactions',
-      href: '/activity',
-      icon: FiActivity,
-      color: 'bg-orange-500'
     }
   ];
 
