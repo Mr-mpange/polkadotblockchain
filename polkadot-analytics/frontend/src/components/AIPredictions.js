@@ -38,6 +38,9 @@ export function AIPredictions({ parachainId }) {
 
   const predData = predictions.data;
   
+  // Debug: log the predictions data
+  console.log('AI Predictions Data:', predData);
+  
   // Map predictions to chart data format
   const chartData = predData.predictions?.map((pred, index) => {
     const predictedValue = pred.predicted_value || pred.value || 0;

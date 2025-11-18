@@ -40,6 +40,9 @@ export function AIInsights({ parachainId }) {
   }
 
   const insightsData = insights.data;
+  
+  // Debug: log the insights data
+  console.log('AI Insights Data:', insightsData);
 
   return (
     <Card>
@@ -51,7 +54,13 @@ export function AIInsights({ parachainId }) {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {insightsData.insights?.map((insight, index) => (
+          {(!insightsData.insights || insightsData.insights.length === 0) ? (
+            <div className="text-center py-8 text-gray-500">
+              <p>No insights available at this time.</p>
+              <p className="text-sm mt-2">The AI is analyzing parachain data...</p>
+            </div>
+          ) : (
+            insightsData.insights?.map((insight, index) => (
             <div
               key={index}
               className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg border border-purple-200 dark:border-purple-800"
@@ -78,7 +87,8 @@ export function AIInsights({ parachainId }) {
                 </div>
               </div>
             </div>
-          ))}
+          ))
+          )}
           
           {insightsData.summary && (
             <div className="pt-3 border-t">
