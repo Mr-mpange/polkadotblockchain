@@ -218,35 +218,35 @@ export default function TVLPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="text-2xl font-bold text-gray-400">
+                    <div className="text-2xl font-bold text-gray-500 dark:text-gray-400">
                       #{index + 1}
                     </div>
                     <div>
-                      <div className="font-semibold">{parachain.name}</div>
-                      <div className="text-sm text-gray-600">
+                      <div className="font-semibold text-gray-900 dark:text-gray-100">{parachain.name}</div>
+                      <div className="text-sm text-gray-700 dark:text-gray-300">
                         ID: {parachain.parachain_id}
                       </div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-lg font-bold">
+                    <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
                       ${parachain.tvl?.toLocaleString()}
                     </div>
                     <div className="text-sm flex items-center justify-end gap-1">
                       {parachain.change >= 0 ? (
                         <>
-                          <FiTrendingUp className="text-green-500" />
-                          <span className="text-green-500">
+                          <FiTrendingUp className="text-green-600 dark:text-green-400" />
+                          <span className="text-green-600 dark:text-green-400">
                             +{parachain.change?.toFixed(2)}%
                           </span>
                         </>
                       ) : (
                         <>
-                          <FiTrendingDown className="text-red-500" />
-                          <span className="text-red-500">
+                          <FiTrendingDown className="text-red-600 dark:text-red-400" />
+                          <span className="text-red-600 dark:text-red-400">
                             {parachain.change?.toFixed(2)}%
                           </span>
                         </>
