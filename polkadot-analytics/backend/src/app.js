@@ -22,6 +22,7 @@ const historyRoutes = require('./routes/history');
 const alertRoutes = require('./routes/alerts');
 const dashboardRoutes = require('./routes/dashboard');
 const subscanRoutes = require('./routes/subscan');
+const aiAnalyticsRoutes = require('./routes/ai-analytics');
 
 const { logger } = require('./utils/logger');
 const { initializeScheduler } = require('./services/scheduler');
@@ -196,6 +197,8 @@ class PolkadotAnalyticsApp {
     this.app.use('/api/history', historyRoutes);
     this.app.use('/api/alerts', alertRoutes);
     this.app.use('/api/subscan', subscanRoutes);
+    this.app.use('/api/ai-analytics', aiAnalyticsRoutes);
+    console.log('✅ AI Analytics routes mounted at /api/ai-analytics');
     
     // Add a test route to verify routing
     this.app.get('/api/test-route', (req, res) => {

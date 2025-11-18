@@ -48,6 +48,16 @@ try {
   process.exit(1);
 }
 
+// Import AI Analytics routes
+let aiAnalyticsRoutes;
+try {
+  aiAnalyticsRoutes = require('./src/routes/ai-analytics');
+  console.log('✅ AI Analytics routes module loaded successfully');
+} catch (error) {
+  console.error('❌ Failed to load AI Analytics routes:', error);
+  process.exit(1);
+}
+
 console.log('=== Route modules loaded ===\n');
 
 const app = express();
@@ -195,6 +205,18 @@ try {
   console.log('✅ TVL routes mounted successfully');
 } catch (error) {
   console.error('❌ Failed to mount TVL routes:', error);
+  process.exit(1);
+}
+
+console.log('\n🔧 Mounting AI Analytics routes at /api/ai-analytics');
+try {
+  app.use('/api/ai-analytics', (req, res, next) => {
+    console.log(`[${new Date().toISOString()}] 🤖 AI Analytics request: ${req.method} ${req.originalUrl}`);
+    next();
+  }, aiAnalyticsRoutes);
+  console.log('✅ AI Analytics routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount AI Analytics routes:', error);
   process.exit(1);
 }
 
