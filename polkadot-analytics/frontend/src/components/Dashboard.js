@@ -396,25 +396,25 @@ const Dashboard = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {parachainsData?.data?.map((parachain) => (
-                        <tr key={parachain.parachainId} className="border-b hover:bg-muted/50">
+                      {parachainsData?.map((parachain) => (
+                        <tr key={parachain.id} className="border-b hover:bg-muted/50">
                           <td className="p-4">
                             <div className="flex items-center space-x-3">
                               <div className="w-8 h-8 bg-gradient-polkadot rounded-full flex items-center justify-center">
                                 <span className="text-white font-bold text-xs">
-                                  {parachain.symbol?.[0] || 'P'}
+                                  {parachain.tokenSymbol?.[0] || 'P'}
                                 </span>
                               </div>
                               <div>
                                 <div className="font-medium">{parachain.name}</div>
                                 <div className="text-sm text-muted-foreground">
-                                  #{parachain.parachainId}
+                                  #{parachain.id}
                                 </div>
                               </div>
                             </div>
                           </td>
                           <td className="p-4">
-                            {formatCurrency(parachain.latestMetrics?.tvl?.totalValueLockedUSD)}
+                            {formatCurrency(parachain.tvl)}
                           </td>
                           <td className="p-4">
                             <span className={`flex items-center space-x-1 ${

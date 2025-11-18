@@ -172,7 +172,23 @@ class ApiService {
       });
       
       console.log('Dashboard data received:', response.data);
-      return response.data;
+      // Extract the actual data from the wrapped response
+      const data = response.data.data || response.data;
+      
+      // Transform snake_case to camelCase for frontend
+      return {
+        totalTVL: data.total_tvl,
+        activeParachains: data.active_parachains,
+        totalTransactions24h: data.total_transactions || 0,
+        activeUsers: data.active_users || 0,
+        tvlChange: data.tvl_change || 0,
+        parachainsChange: data.parachains_change || 0,
+        transactionsChange: data.transactions_change || 0,
+        usersChange: data.users_change || 0,
+        recentActivity: data.recent_activity || [],
+        period: period,
+        updatedAt: new Date().toISOString()
+      };
     } catch (error) {
       console.error('Error fetching dashboard data:', {
         message: error.message,
@@ -379,7 +395,8 @@ class ApiService {
       });
       
       console.log('TVL response received:', response.data);
-      return response.data;
+      // Extract the actual data from the wrapped response
+      return response.data.data || response.data;
     } catch (error) {
       console.error('Error in getTVL:', {
         message: error.message,
