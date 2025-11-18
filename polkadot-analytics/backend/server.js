@@ -58,6 +58,16 @@ try {
   process.exit(1);
 }
 
+// Import Subscan routes
+let subscanRoutes;
+try {
+  subscanRoutes = require('./src/routes/subscan');
+  console.log('✅ Subscan routes module loaded successfully');
+} catch (error) {
+  console.error('❌ Failed to load Subscan routes:', error);
+  process.exit(1);
+}
+
 console.log('=== Route modules loaded ===\n');
 
 const app = express();
@@ -217,6 +227,18 @@ try {
   console.log('✅ AI Analytics routes mounted successfully');
 } catch (error) {
   console.error('❌ Failed to mount AI Analytics routes:', error);
+  process.exit(1);
+}
+
+console.log('\n🔧 Mounting Subscan routes at /api/subscan');
+try {
+  app.use('/api/subscan', (req, res, next) => {
+    console.log(`[${new Date().toISOString()}] 🔗 Subscan request: ${req.method} ${req.originalUrl}`);
+    next();
+  }, subscanRoutes);
+  console.log('✅ Subscan routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount Subscan routes:', error);
   process.exit(1);
 }
 
