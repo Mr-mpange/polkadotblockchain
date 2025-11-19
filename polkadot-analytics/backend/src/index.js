@@ -23,6 +23,7 @@ const dashboardRoutes = require('./routes/dashboard');
 const parachainsRoutes = require('./routes/parachains');
 const tvlRoutes = require('./routes/tvl');
 const subscanRoutes = require('./routes/subscan');
+const aiAnalyticsRoutes = require('./routes/ai-analytics');
 
 async function startServer() {
   try {
@@ -94,6 +95,13 @@ async function startServer() {
       console.log('Subscan router hit:', req.originalUrl);
       next();
     }, subscanRoutes);
+    
+    // Mount AI Analytics routes under /api/ai-analytics
+    app.use('/api/ai-analytics', (req, res, next) => {
+      console.log('AI Analytics router hit:', req.originalUrl);
+      next();
+    }, aiAnalyticsRoutes);
+    console.log('✅ AI Analytics routes mounted at /api/ai-analytics');
     
     // Test route after mounting
     app.get('/api/test-after', (req, res) => {
