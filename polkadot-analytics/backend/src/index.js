@@ -51,7 +51,8 @@ async function startServer() {
     app.use(cors({
       origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization']
+      allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma', 'Expires'],
+      credentials: true
     }));
     
     // Parse JSON bodies
@@ -138,7 +139,7 @@ async function startServer() {
       });
     });
     
-    const PORT = 3001;
+    const PORT = process.env.PORT || 5000;
     const server = app.listen(PORT, () => {
       console.log(`✅ Server running on http://localhost:${PORT}`);
       console.log(`📊 Dashboard API: http://localhost:${PORT}/api/dashboard`);

@@ -8,11 +8,7 @@ module.exports = (sequelize, DataTypes) => {
     parachainId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: 'parachain_id',
-      references: {
-        model: 'parachains', 
-        key: 'id'
-      }
+      field: 'parachain_id'
     },
     totalValueLocked: {
       type: DataTypes.STRING,
