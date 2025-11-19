@@ -8,111 +8,116 @@ exports.getAllAlerts = async (req, res) => {
   try {
     const { severity, status, limit = 50 } = req.query;
     
-    // Get real data from Subscan to generate alerts
-    const endDate = new Date().toISOString().split('T')[0];
-    const startDate = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
-    
-    const statsResponse = await subscanService.getDailyStats(startDate, endDate);
-    
     const alerts = [];
     
-    if (statsResponse && statsResponse.code === 0 && statsResponse.data && statsResponse.data.list) {
-      const stats = statsResponse.data.list;
+    try {
+      // Try to get real data from Subscan to generate alerts
+      const endDate = new Date().toISOString().split('T')[0];
+      const startDate = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
       
-      // Analyze transaction volume changes
-      if (stats.length >= 2) {
-        const latest = stats[stats.length - 1];
-        const previous = stats[stats.length - 2];
+      const statsResponse = await subscanService.getDailyStats(startDate, endDate);
+      
+      if (statsResponse && statsResponse.code === 0 && statsResponse.data && statsResponse.data.list) {
+        const stats = statsResponse.data.list;
         
-        const latestTransfers = parseInt(latest.transfer_count) || 0;
-        const previousTransfers = parseInt(previous.transfer_count) || 0;
-        
-        if (previousTransfers > 0) {
-          const percentChange = ((latestTransfers - previousTransfers) / previousTransfers) * 100;
+        // Analyze transaction volume changes
+        if (stats.length >= 2) {
+          const latest = stats[stats.length - 1];
+          const previous = stats[stats.length - 2];
           
-          // High volume alert
-          if (percentChange > 50) {
-            alerts.push({
-              id: alerts.length + 1,
-              type: 'high_volume',
-              severity: percentChange > 100 ? 'high' : 'medium',
-              status: 'active',
-              title: 'High Transaction Volume Detected',
-              message: `Network experiencing ${percentChange.toFixed(1)}% increase in transaction volume (${latestTransfers.toLocaleString()} transactions)`,
-              parachain: 'Polkadot',
-              parachainName: 'Polkadot',
-              parachainId: '0',
-              timestamp: new Date().toISOString(),
-              firstSeen: latest.time || new Date().toISOString(),
-              lastSeen: new Date().toISOString(),
-              acknowledged: false,
-              count: 1,
-              details: {
-                currentVolume: latestTransfers,
-                previousVolume: previousTransfers,
-                percentageChange: percentChange
-              }
-            });
+          const latestTransfers = parseInt(latest.transfer_count) || 0;
+          const previousTransfers = parseInt(previous.transfer_count) || 0;
+          
+          if (previousTransfers > 0) {
+            const percentChange = ((latestTransfers - previousTransfers) / previousTransfers) * 100;
+            
+            // High volume alert
+            if (percentChange > 50) {
+              alerts.push({
+                id: alerts.length + 1,
+                type: 'high_volume',
+                severity: percentChange > 100 ? 'high' : 'medium',
+                status: 'active',
+                title: 'High Transaction Volume Detected',
+                message: `Network experiencing ${percentChange.toFixed(1)}% increase in transaction volume (${latestTransfers.toLocaleString()} transactions)`,
+                parachain: 'Polkadot',
+                parachainName: 'Polkadot',
+                parachainId: '0',
+                timestamp: new Date().toISOString(),
+                firstSeen: latest.time || new Date().toISOString(),
+                lastSeen: new Date().toISOString(),
+                acknowledged: false,
+                count: 1,
+                details: {
+                  currentVolume: latestTransfers,
+                  previousVolume: previousTransfers,
+                  percentageChange: percentChange
+                }
+              });
+            }
+            
+            // Low volume alert
+            if (percentChange < -30) {
+              alerts.push({
+                id: alerts.length + 1,
+                type: 'low_volume',
+                severity: 'medium',
+                status: 'active',
+                title: 'Transaction Volume Decrease',
+                message: `Network experiencing ${Math.abs(percentChange).toFixed(1)}% decrease in transaction volume`,
+                parachain: 'Polkadot',
+                parachainName: 'Polkadot',
+                parachainId: '0',
+                timestamp: new Date().toISOString(),
+                firstSeen: latest.time || new Date().toISOString(),
+                lastSeen: new Date().toISOString(),
+                acknowledged: false,
+                count: 1,
+                details: {
+                  currentVolume: latestTransfers,
+                  previousVolume: previousTransfers,
+                  percentageChange: percentChange
+                }
+              });
+            }
           }
           
-          // Low volume alert
-          if (percentChange < -30) {
-            alerts.push({
-              id: alerts.length + 1,
-              type: 'low_volume',
-              severity: 'medium',
-              status: 'active',
-              title: 'Transaction Volume Decrease',
-              message: `Network experiencing ${Math.abs(percentChange).toFixed(1)}% decrease in transaction volume`,
-              parachain: 'Polkadot',
-              parachainName: 'Polkadot',
-              parachainId: '0',
-              timestamp: new Date().toISOString(),
-              firstSeen: latest.time || new Date().toISOString(),
-              lastSeen: new Date().toISOString(),
-              acknowledged: false,
-              count: 1,
-              details: {
-                currentVolume: latestTransfers,
-                previousVolume: previousTransfers,
-                percentageChange: percentChange
-              }
-            });
-          }
-        }
-        
-        // Active accounts alert
-        const latestAccounts = parseInt(latest.account_count) || 0;
-        const previousAccounts = parseInt(previous.account_count) || 0;
-        
-        if (previousAccounts > 0) {
-          const accountChange = ((latestAccounts - previousAccounts) / previousAccounts) * 100;
+          // Active accounts alert
+          const latestAccounts = parseInt(latest.account_count) || 0;
+          const previousAccounts = parseInt(previous.account_count) || 0;
           
-          if (Math.abs(accountChange) > 20) {
-            alerts.push({
-              id: alerts.length + 1,
-              type: 'account_activity',
-              severity: Math.abs(accountChange) > 40 ? 'high' : 'medium',
-              status: 'active',
-              title: accountChange > 0 ? 'Increased User Activity' : 'Decreased User Activity',
-              message: `Active accounts ${accountChange > 0 ? 'increased' : 'decreased'} by ${Math.abs(accountChange).toFixed(1)}% (${latestAccounts.toLocaleString()} accounts)`,
-              parachain: 'Polkadot',
-              parachainName: 'Polkadot',
-              parachainId: '0',
-              timestamp: new Date().toISOString(),
-              firstSeen: latest.time || new Date().toISOString(),
-              lastSeen: new Date().toISOString(),
-              acknowledged: false,
-              count: 1,
-              details: {
-                currentAccounts: latestAccounts,
-                previousAccounts: previousAccounts,
-                percentageChange: accountChange
-              }
-            });
+          if (previousAccounts > 0) {
+            const accountChange = ((latestAccounts - previousAccounts) / previousAccounts) * 100;
+            
+            if (Math.abs(accountChange) > 20) {
+              alerts.push({
+                id: alerts.length + 1,
+                type: 'account_activity',
+                severity: Math.abs(accountChange) > 40 ? 'high' : 'medium',
+                status: 'active',
+                title: accountChange > 0 ? 'Increased User Activity' : 'Decreased User Activity',
+                message: `Active accounts ${accountChange > 0 ? 'increased' : 'decreased'} by ${Math.abs(accountChange).toFixed(1)}% (${latestAccounts.toLocaleString()} accounts)`,
+                parachain: 'Polkadot',
+                parachainName: 'Polkadot',
+                parachainId: '0',
+                timestamp: new Date().toISOString(),
+                firstSeen: latest.time || new Date().toISOString(),
+                lastSeen: new Date().toISOString(),
+                acknowledged: false,
+                count: 1,
+                details: {
+                  currentAccounts: latestAccounts,
+                  previousAccounts: previousAccounts,
+                  percentageChange: accountChange
+                }
+              });
+            }
           }
         }
       }
+    } catch (subscanError) {
+      // If Subscan fails, just log it and continue with default alert
+      console.log('Subscan service unavailable, using default alerts');
     }
     
     // If no alerts generated from real data, add a status alert
@@ -153,7 +158,7 @@ exports.getAllAlerts = async (req, res) => {
       total: filteredAlerts.length
     });
   } catch (error) {
-    logger.error('Error fetching alerts:', error);
+    console.error('Error fetching alerts:', error.message);
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch alerts',
@@ -197,7 +202,7 @@ exports.getAlertById = async (req, res) => {
       data: alert
     });
   } catch (error) {
-    logger.error('Error fetching alert:', error);
+    console.error('Error fetching alert:', error.message);
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch alert',
@@ -223,7 +228,7 @@ exports.acknowledgeAlert = async (req, res) => {
       }
     });
   } catch (error) {
-    logger.error('Error acknowledging alert:', error);
+    console.error('Error acknowledging alert:', error.message);
     res.status(500).json({
       status: 'error',
       message: 'Failed to acknowledge alert',
@@ -249,7 +254,7 @@ exports.resolveAlert = async (req, res) => {
       }
     });
   } catch (error) {
-    logger.error('Error resolving alert:', error);
+    console.error('Error resolving alert:', error.message);
     res.status(500).json({
       status: 'error',
       message: 'Failed to resolve alert',
@@ -263,55 +268,60 @@ exports.resolveAlert = async (req, res) => {
  */
 exports.getAlertStats = async (req, res) => {
   try {
-    // Get alerts using the same logic as getAllAlerts
-    const endDate = new Date().toISOString().split('T')[0];
-    const startDate = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
-    
-    const statsResponse = await subscanService.getDailyStats(startDate, endDate);
-    
     let alertCount = { high: 0, medium: 0, low: 0 };
     let totalAlerts = 0;
     
-    if (statsResponse && statsResponse.code === 0 && statsResponse.data && statsResponse.data.list) {
-      const stats = statsResponse.data.list;
+    try {
+      // Try to get alerts using the same logic as getAllAlerts
+      const endDate = new Date().toISOString().split('T')[0];
+      const startDate = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
       
-      if (stats.length >= 2) {
-        const latest = stats[stats.length - 1];
-        const previous = stats[stats.length - 2];
+      const statsResponse = await subscanService.getDailyStats(startDate, endDate);
+      
+      if (statsResponse && statsResponse.code === 0 && statsResponse.data && statsResponse.data.list) {
+        const stats = statsResponse.data.list;
         
-        const latestTransfers = parseInt(latest.transfer_count) || 0;
-        const previousTransfers = parseInt(previous.transfer_count) || 0;
-        
-        if (previousTransfers > 0) {
-          const percentChange = ((latestTransfers - previousTransfers) / previousTransfers) * 100;
+        if (stats.length >= 2) {
+          const latest = stats[stats.length - 1];
+          const previous = stats[stats.length - 2];
           
-          if (percentChange > 100) {
-            alertCount.high++;
-            totalAlerts++;
-          } else if (percentChange > 50) {
-            alertCount.medium++;
-            totalAlerts++;
-          } else if (percentChange < -30) {
-            alertCount.medium++;
-            totalAlerts++;
+          const latestTransfers = parseInt(latest.transfer_count) || 0;
+          const previousTransfers = parseInt(previous.transfer_count) || 0;
+          
+          if (previousTransfers > 0) {
+            const percentChange = ((latestTransfers - previousTransfers) / previousTransfers) * 100;
+            
+            if (percentChange > 100) {
+              alertCount.high++;
+              totalAlerts++;
+            } else if (percentChange > 50) {
+              alertCount.medium++;
+              totalAlerts++;
+            } else if (percentChange < -30) {
+              alertCount.medium++;
+              totalAlerts++;
+            }
           }
-        }
-        
-        const latestAccounts = parseInt(latest.account_count) || 0;
-        const previousAccounts = parseInt(previous.account_count) || 0;
-        
-        if (previousAccounts > 0) {
-          const accountChange = ((latestAccounts - previousAccounts) / previousAccounts) * 100;
           
-          if (Math.abs(accountChange) > 40) {
-            alertCount.high++;
-            totalAlerts++;
-          } else if (Math.abs(accountChange) > 20) {
-            alertCount.medium++;
-            totalAlerts++;
+          const latestAccounts = parseInt(latest.account_count) || 0;
+          const previousAccounts = parseInt(previous.account_count) || 0;
+          
+          if (previousAccounts > 0) {
+            const accountChange = ((latestAccounts - previousAccounts) / previousAccounts) * 100;
+            
+            if (Math.abs(accountChange) > 40) {
+              alertCount.high++;
+              totalAlerts++;
+            } else if (Math.abs(accountChange) > 20) {
+              alertCount.medium++;
+              totalAlerts++;
+            }
           }
         }
       }
+    } catch (subscanError) {
+      // If Subscan fails, just log it and continue with default stats
+      console.log('Subscan service unavailable, using default stats');
     }
     
     // If no alerts, add a low severity status
@@ -335,7 +345,7 @@ exports.getAlertStats = async (req, res) => {
       data: stats
     });
   } catch (error) {
-    logger.error('Error fetching alert stats:', error);
+    console.error('Error fetching alert stats:', error.message);
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch alert statistics',
