@@ -25,6 +25,7 @@ const tvlRoutes = require('./routes/tvl');
 const subscanRoutes = require('./routes/subscan');
 const aiAnalyticsRoutes = require('./routes/ai-analytics');
 const alertsRoutes = require('./routes/alerts');
+const activityRoutes = require('./routes/activity');
 
 async function startServer() {
   try {
@@ -110,6 +111,13 @@ async function startServer() {
       next();
     }, alertsRoutes);
     console.log('✅ Alerts routes mounted at /api/alerts');
+    
+    // Mount Activity routes under /api/activity
+    app.use('/api/activity', (req, res, next) => {
+      console.log('Activity router hit:', req.originalUrl);
+      next();
+    }, activityRoutes);
+    console.log('✅ Activity routes mounted at /api/activity');
     
     // Test route after mounting
     app.get('/api/test-after', (req, res) => {
